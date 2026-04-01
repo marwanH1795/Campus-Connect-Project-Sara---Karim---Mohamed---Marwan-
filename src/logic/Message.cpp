@@ -118,6 +118,35 @@ std::string Message::toJson() const {
 }
 
 Message Message::fromJson(const std::string& json) {
-    (void)json;
-    return Message();
+    auto extractValue = [&](const std::string& key) -> std::string {
+        std::string pattern = "\"" + key + "\":\"";
+        size_t start = json.find(pattern);
+        if (start == std::string::npos) {
+            return "";
+        }
+
+        start += pattern.length();
+        size_t end = json.find("\"", start);
+        if (end == std::string::npos) {
+            return "";
+        }
+
+        return json.substr(start, end - start);
+    };
+
+    std::string typeStr = extractValue("type");
+    std::string sender = extractValue("sender");
+    std::string target = extractValue("target");
+    std::string groupId = extractValue("groupId");
+    std::string content = extractValue("content");
+    std::string timestamp = extractValue("timestamp");
+
+    return Message(
+        stringToMessageType(typeStr),
+        sender,
+        target,
+        groupId,
+        content,
+        timestamp
+    );
 }
