@@ -1,0 +1,74 @@
+#include "TcpNetworkClient.h"
+
+#include <QDebug>
+#include <QString>
+
+TcpNetworkClient::TcpNetworkClient() {
+    socket = new QTcpSocket();
+
+    QObject::connect(socket, &QTcpSocket::readyRead, [this]() {
+        buffer.append(socket->readAll());
+        processBuffer();
+    });
+
+    QObject::connect(socket, &QTcpSocket::connected, [this]() {
+        qDebug() << "Connected to server";
+
+        // send any queued messages
+        for (const QString& msg : pendingMessages) {
+            QByteArray data = msg.toUtf8();
+            data.append('\n');
+            socket->write(data);
+        }
+        pendingMessages.clear();
+    });
+
+    QObject::connect(socket, &QTcpSocket::disconnected, []() {
+        qDebug() << "Disconnected from server";
+    });
+}
+
+TcpNetworkClient::~TcpNetworkClient() {
+    socket->close();
+    delete socket;
+}
+
+void TcpNetworkClient::setMessageHandler(std::function<void(const std::string&)> handler) {
+    messageHandler = handler;
+}
+
+void TcpNetworkClient::connectToServer(const std::string& username) {
+    Q_UNUSED(username);
+    socket->connectToHost("127.0.0.1", 12345);
+}
+
+void TcpNetworkClient::sendMessage(const std::string& message) {
+    QString qmsg = QString::fromStdString(message);
+
+    if (socket->state() == QAbstractSocket::ConnectedState) {
+        QByteArray data = qmsg.toUtf8();
+        data.append('\n');
+        socket->write(data);
+    } else {
+        // queue message until connection is ready
+        pendingMessages.append(qmsg);
+    }
+}
+
+void TcpNetworkClient::processBuffer() {
+    while (true) {
+        int index = buffer.indexOf('\n');
+        if (index == -1)
+            break;
+
+        QByteArray line = buffer.left(index).trimmed();
+        buffer.remove(0, index + 1);
+
+        if (line.isEmpty())
+            continue;
+
+        if (messageHandler) {
+            messageHandler(line.toStdString());
+        }
+    }
+}

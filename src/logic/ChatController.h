@@ -19,6 +19,10 @@ public:
     bool connectUser(const std::string& username);
     bool sendPublicMessage(const std::string& content);
 
+    bool createGroup(const std::string& groupId);
+    bool joinGroup(const std::string& groupId);
+    bool sendGroupMessage(const std::string& groupId, const std::string& content);
+
     ChatState& getState();
 };
 

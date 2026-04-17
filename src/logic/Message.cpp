@@ -1,5 +1,10 @@
 #include "Message.h"
 
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QJsonParseError>
+#include <QString>
+
 Message::Message()
     : type(MessageType::Unknown),
       sender(""),
@@ -25,53 +30,19 @@ Message::Message(MessageType type,
 {
 }
 
-MessageType Message::getType() const {
-    return type;
-}
+MessageType Message::getType() const { return type; }
+std::string Message::getSender() const { return sender; }
+std::string Message::getTarget() const { return target; }
+std::string Message::getGroupId() const { return groupId; }
+std::string Message::getContent() const { return content; }
+std::string Message::getTimestamp() const { return timestamp; }
 
-std::string Message::getSender() const {
-    return sender;
-}
-
-std::string Message::getTarget() const {
-    return target;
-}
-
-std::string Message::getGroupId() const {
-    return groupId;
-}
-
-std::string Message::getContent() const {
-    return content;
-}
-
-std::string Message::getTimestamp() const {
-    return timestamp;
-}
-
-void Message::setType(MessageType newType) {
-    type = newType;
-}
-
-void Message::setSender(const std::string& newSender) {
-    sender = newSender;
-}
-
-void Message::setTarget(const std::string& newTarget) {
-    target = newTarget;
-}
-
-void Message::setGroupId(const std::string& newGroupId) {
-    groupId = newGroupId;
-}
-
-void Message::setContent(const std::string& newContent) {
-    content = newContent;
-}
-
-void Message::setTimestamp(const std::string& newTimestamp) {
-    timestamp = newTimestamp;
-}
+void Message::setType(MessageType newType) { type = newType; }
+void Message::setSender(const std::string& newSender) { sender = newSender; }
+void Message::setTarget(const std::string& newTarget) { target = newTarget; }
+void Message::setGroupId(const std::string& newGroupId) { groupId = newGroupId; }
+void Message::setContent(const std::string& newContent) { content = newContent; }
+void Message::setTimestamp(const std::string& newTimestamp) { timestamp = newTimestamp; }
 
 std::string Message::messageTypeToString(MessageType type) {
     switch (type) {
@@ -80,6 +51,7 @@ std::string Message::messageTypeToString(MessageType type) {
         case MessageType::PublicMessage: return "public_message";
         case MessageType::PrivateMessage: return "private_message";
         case MessageType::CreateGroup: return "create_group";
+        case MessageType::JoinGroup: return "join_group";
         case MessageType::GroupMessage: return "group_message";
         case MessageType::UserList: return "user_list";
         case MessageType::Error: return "error";
@@ -96,6 +68,7 @@ MessageType Message::stringToMessageType(const std::string& typeString) {
     if (typeString == "public_message") return MessageType::PublicMessage;
     if (typeString == "private_message") return MessageType::PrivateMessage;
     if (typeString == "create_group") return MessageType::CreateGroup;
+    if (typeString == "join_group") return MessageType::JoinGroup;
     if (typeString == "group_message") return MessageType::GroupMessage;
     if (typeString == "user_list") return MessageType::UserList;
     if (typeString == "error") return MessageType::Error;
@@ -107,46 +80,34 @@ MessageType Message::stringToMessageType(const std::string& typeString) {
 }
 
 std::string Message::toJson() const {
-    return "{"
-           "\"type\":\"" + messageTypeToString(type) + "\","
-           "\"sender\":\"" + sender + "\","
-           "\"target\":\"" + target + "\","
-           "\"groupId\":\"" + groupId + "\","
-           "\"content\":\"" + content + "\","
-           "\"timestamp\":\"" + timestamp + "\""
-           "}";
+    QJsonObject obj;
+    obj["type"] = QString::fromStdString(messageTypeToString(type));
+    obj["sender"] = QString::fromStdString(sender);
+    obj["target"] = QString::fromStdString(target);
+    obj["groupId"] = QString::fromStdString(groupId);
+    obj["content"] = QString::fromStdString(content);
+    obj["timestamp"] = QString::fromStdString(timestamp);
+
+    QJsonDocument doc(obj);
+    return doc.toJson(QJsonDocument::Compact).toStdString();
 }
 
 Message Message::fromJson(const std::string& json) {
-    auto extractValue = [&](const std::string& key) -> std::string {
-        std::string pattern = "\"" + key + "\":\"";
-        size_t start = json.find(pattern);
-        if (start == std::string::npos) {
-            return "";
-        }
+    QJsonParseError error;
+    QJsonDocument doc = QJsonDocument::fromJson(QByteArray::fromStdString(json), &error);
 
-        start += pattern.length();
-        size_t end = json.find("\"", start);
-        if (end == std::string::npos) {
-            return "";
-        }
+    if (error.error != QJsonParseError::NoError || !doc.isObject()) {
+        return Message();
+    }
 
-        return json.substr(start, end - start);
-    };
-
-    std::string typeStr = extractValue("type");
-    std::string sender = extractValue("sender");
-    std::string target = extractValue("target");
-    std::string groupId = extractValue("groupId");
-    std::string content = extractValue("content");
-    std::string timestamp = extractValue("timestamp");
+    QJsonObject obj = doc.object();
 
     return Message(
-        stringToMessageType(typeStr),
-        sender,
-        target,
-        groupId,
-        content,
-        timestamp
+        stringToMessageType(obj.value("type").toString().toStdString()),
+        obj.value("sender").toString().toStdString(),
+        obj.value("target").toString().toStdString(),
+        obj.value("groupId").toString().toStdString(),
+        obj.value("content").toString().toStdString(),
+        obj.value("timestamp").toString().toStdString()
     );
 }

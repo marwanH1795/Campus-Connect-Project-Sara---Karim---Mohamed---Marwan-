@@ -9,6 +9,7 @@ enum class MessageType {
     PublicMessage,
     PrivateMessage,
     CreateGroup,
+    JoinGroup,
     GroupMessage,
     UserList,
     Error,
