@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ChatWindow</class>
+
+ <widget class="QWidget" name="ChatWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>760</width>
+    <height>560</height>
+   </rect>
+  </property>
+
+  <property name="windowTitle">
+   <string>Campus Connect - Chat</string>
+  </property>
+
+  <property name="styleSheet">
+   <string notr="true">
+QWidget#ChatWindow {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #e0e0f0;
+    background-color: #1e1f2e;
+}
+
+/* ── Chat display ── */
+QTextEdit {
+    background-color: #16172a;
+    border: 2px solid #3a3b55;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 13px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #dcdcf0;
+}
+
+/* ── Message input ── */
+QLineEdit {
+    background-color: #2a2b3d;
+    color: #e0e0f0;
+    border: 2px solid #4a4b6a;
+    border-radius: 10px;
+    padding: 4px 14px;
+    font-size: 13px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+QLineEdit:focus {
+    border: 2px solid #7c6af7;
+}
+QLineEdit[placeholderText] {
+    color: #9a9ac0;
+}
+
+/* ── Send button ── */
+QPushButton#sendButton {
+    background-color: #3ecf8e;
+    color: #1e1f2e;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: bold;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+QPushButton#sendButton:hover {
+    background-color: #55e0a3;
+}
+QPushButton#sendButton:pressed {
+    background-color: #28a570;
+}
+
+/* ── Groups button ── */
+QPushButton#groupButton {
+    background-color: #2a2b3d;
+    color: #7c6af7;
+    border: 2px solid #7c6af7;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: bold;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+QPushButton#groupButton:hover {
+    background-color: #7c6af7;
+    color: #ffffff;
+}
+QPushButton#groupButton:pressed {
+    background-color: #5a4fcf;
+    color: #ffffff;
+}
+
+/* ── Scrollbars ── */
+QScrollBar:vertical {
+    background: #1e1f2e;
+    width: 8px;
+    border-radius: 4px;
+}
+QScrollBar::handle:vertical {
+    background: #4a4b6a;
+    border-radius: 4px;
+    min-height: 20px;
+}
+QScrollBar::handle:vertical:hover {
+    background: #7c6af7;
+}
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+   </string>
+  </property>
+
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>20</number>
+   </property>
+   <property name="topMargin">
+    <number>20</number>
+   </property>
+   <property name="rightMargin">
+    <number>20</number>
+   </property>
+   <property name="bottomMargin">
+    <number>20</number>
+   </property>
+   <property name="spacing">
+    <number>14</number>
+   </property>
+
+   <item>
+    <widget class="QTextEdit" name="chatDisplay">
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="html">
+      <string>&lt;!DOCTYPE HTML&gt;&lt;html&gt;&lt;body style="font-family:'Segoe UI'; font-size:12pt; color:#9a9ac0;"&gt;
+      &lt;p style="margin:6px 0;"&gt;&lt;i&gt;Messages will appear here…&lt;/i&gt;&lt;/p&gt;
+      &lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
+
+   <item>
+    <widget class="QLineEdit" name="messageInput">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>46</height>
+      </size>
+     </property>
+     <property name="placeholderText">
+      <string>Type a message...</string>
+     </property>
+    </widget>
+   </item>
+
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>16</number>
+     </property>
+
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+
+     <item>
+      <widget class="QPushButton" name="sendButton">
+       <property name="minimumSize">
+        <size>
+         <width>145</width>
+         <height>48</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>145</width>
+         <height>48</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Send  ➤</string>
+       </property>
+      </widget>
+     </item>
+
+     <item>
+      <widget class="QPushButton" name="groupButton">
+       <property name="minimumSize">
+        <size>
+         <width>145</width>
+         <height>48</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>145</width>
+         <height>48</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Groups</string>
+       </property>
+      </widget>
+     </item>
+
+    </layout>
+   </item>
+
+  </layout>
+ </widget>
+
+ <resources/>
+ <connections/>
+</ui>
