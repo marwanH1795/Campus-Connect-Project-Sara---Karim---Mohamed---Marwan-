@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>660</width>
+    <height>420</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Group Chat</string>
+  </property>
+
+  <!-- ── Global dialog stylesheet ── -->
+  <property name="styleSheet">
+   <string>
+    QDialog {
+      background-color: #1e1f2e;
+      color: #e0e0f0;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    /* ── Group name input ── */
+    QLineEdit#groupNameInput {
+      background-color: #2a2b3d;
+      color: #ffffff;
+      border: 2px solid #4a4b6a;
+      border-radius: 10px;
+      padding: 4px 10px;
+      font-size: 13px;
+      selection-background-color: #7c6af7;
+    }
+    QLineEdit#groupNameInput:focus {
+      border: 2px solid #7c6af7;
+    }
+
+    /* ── Message input ── */
+    QLineEdit#groupMessageInput {
+      background-color: #2a2b3d;
+      color: #e0e0f0;
+      border: 2px solid #4a4b6a;
+      border-radius: 10px;
+      padding: 4px 12px;
+      font-size: 12px;
+    }
+    QLineEdit#groupMessageInput:focus {
+      border: 2px solid #7c6af7;
+    }
+
+    /* ── Shared button base ── */
+    QPushButton {
+      border-radius: 10px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: bold;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    /* ── Create Group button ── */
+    QPushButton#createButton {
+      background-color: #7c6af7;
+      color: #ffffff;
+      border: none;
+    }
+    QPushButton#createButton:hover {
+      background-color: #9b8dff;
+    }
+    QPushButton#createButton:pressed {
+      background-color: #5a4fcf;
+    }
+
+    /* ── Join Group button ── */
+    QPushButton#joinButton {
+      background-color: #2a2b3d;
+      color: #7c6af7;
+      border: 2px solid #7c6af7;
+    }
+    QPushButton#joinButton:hover {
+      background-color: #7c6af7;
+      color: #ffffff;
+    }
+    QPushButton#joinButton:pressed {
+      background-color: #5a4fcf;
+      color: #ffffff;
+    }
+
+    /* ── Send button ── */
+    QPushButton#sendButton {
+      background-color: #3ecf8e;
+      color: #1e1f2e;
+      border: none;
+    }
+    QPushButton#sendButton:hover {
+      background-color: #55e0a3;
+    }
+    QPushButton#sendButton:pressed {
+      background-color: #28a570;
+    }
+
+    /* ── ComboBox ── */
+    QComboBox#groupSelector {
+      background-color: #2a2b3d;
+      color: #e0e0f0;
+      border: 2px solid #4a4b6a;
+      border-radius: 10px;
+      padding: 3px 10px;
+      font-size: 12px;
+    }
+    QComboBox#groupSelector:focus {
+      border: 2px solid #7c6af7;
+    }
+    QComboBox#groupSelector::drop-down {
+      border: none;
+      width: 24px;
+    }
+    QComboBox QAbstractItemView {
+      background-color: #2a2b3d;
+      color: #e0e0f0;
+      selection-background-color: #7c6af7;
+      border: 1px solid #4a4b6a;
+      border-radius: 6px;
+    }
+
+    /* ── Chat display ── */
+    QTextEdit#groupDisplay {
+      background-color: #16172a;
+      color: #dcdcf0;
+      border: 2px solid #3a3b55;
+      border-radius: 12px;
+      padding: 8px;
+      font-size: 12px;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    /* ── Scrollbars ── */
+    QScrollBar:vertical {
+      background: #1e1f2e;
+      width: 8px;
+      border-radius: 4px;
+    }
+    QScrollBar::handle:vertical {
+      background: #4a4b6a;
+      border-radius: 4px;
+      min-height: 20px;
+    }
+    QScrollBar::handle:vertical:hover {
+      background: #7c6af7;
+    }
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+      height: 0px;
+    }
+   </string>
+  </property>
+
+  <!-- ── Widgets (layout unchanged, just cleaned up) ── -->
+
+  <widget class="QLineEdit" name="groupNameInput">
+   <property name="geometry">
+    <rect><x>30</x><y>20</y><width>300</width><height>34</height></rect>
+   </property>
+   <property name="placeholderText">
+    <string>Group name...</string>
+   </property>
+   <property name="text">
+    <string>My group</string>
+   </property>
+  </widget>
+
+  <widget class="QPushButton" name="createButton">
+   <property name="geometry">
+    <rect><x>360</x><y>20</y><width>160</width><height>34</height></rect>
+   </property>
+   <property name="text">
+    <string>＋  Create Group</string>
+   </property>
+  </widget>
+
+  <widget class="QPushButton" name="joinButton">
+   <property name="geometry">
+    <rect><x>30</x><y>66</y><width>160</width><height>34</height></rect>
+   </property>
+   <property name="text">
+    <string>→  Join Group</string>
+   </property>
+  </widget>
+
+  <widget class="QComboBox" name="groupSelector">
+   <property name="geometry">
+    <rect><x>210</x><y>66</y><width>200</width><height>34</height></rect>
+   </property>
+  </widget>
+
+  <widget class="QTextEdit" name="groupDisplay">
+   <property name="geometry">
+    <rect><x>30</x><y>116</y><width>600</width><height>200</height></rect>
+   </property>
+   <property name="html">
+    <string>&lt;!DOCTYPE HTML&gt;&lt;html&gt;&lt;body style="font-family:'Segoe UI'; font-size:12pt; color:#9a9ac0;"&gt;
+    &lt;p style="margin:6px 0;"&gt;&lt;i&gt;Group messages will appear here…&lt;/i&gt;&lt;/p&gt;
+    &lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="readOnly">
+    <bool>true</bool>
+   </property>
+  </widget>
+
+  <widget class="QLineEdit" name="groupMessageInput">
+   <property name="geometry">
+    <rect><x>30</x><y>330</y><width>460</width><height>36</height></rect>
+   </property>
+   <property name="placeholderText">
+    <string>Type a message...</string>
+   </property>
+  </widget>
+
+  <widget class="QPushButton" name="sendButton">
+   <property name="geometry">
+    <rect><x>506</x><y>330</y><width>124</width><height>36</height></rect>
+   </property>
+   <property name="text">
+    <string>Send  ➤</string>
+   </property>
+  </widget>
+
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
