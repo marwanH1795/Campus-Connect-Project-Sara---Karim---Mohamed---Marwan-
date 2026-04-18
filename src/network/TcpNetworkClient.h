@@ -5,6 +5,7 @@
 #include <QTcpSocket>
 #include <QByteArray>
 #include <QStringList>
+#include <functional>
 
 class TcpNetworkClient : public INetworkClient {
 private:

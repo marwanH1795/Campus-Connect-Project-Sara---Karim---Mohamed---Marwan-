@@ -14,7 +14,6 @@ TcpNetworkClient::TcpNetworkClient() {
     QObject::connect(socket, &QTcpSocket::connected, [this]() {
         qDebug() << "Connected to server";
 
-        // send any queued messages
         for (const QString& msg : pendingMessages) {
             QByteArray data = msg.toUtf8();
             data.append('\n');
@@ -50,7 +49,6 @@ void TcpNetworkClient::sendMessage(const std::string& message) {
         data.append('\n');
         socket->write(data);
     } else {
-        // queue message until connection is ready
         pendingMessages.append(qmsg);
     }
 }

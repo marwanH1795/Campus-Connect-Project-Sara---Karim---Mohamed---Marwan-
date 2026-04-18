@@ -2,49 +2,24 @@
 #include "GroupWindow.h"
 #include "../logic/ChatController.h"
 #include "../logic/Message.h"
+#include "ui_ChatWindow.h"
 
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QTextEdit>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QScrollBar>
 #include <QTimer>
+#include <QScrollBar>
 #include <QStringList>
 
 ChatWindow::ChatWindow(std::shared_ptr<ChatController> controller, QWidget* parent)
-    : QWidget(parent), controller(controller)
+    : QWidget(parent), ui(new Ui::ChatWindow), refreshTimer(new QTimer(this)), controller(controller)
 {
-    setWindowTitle("Campus Connect - Chat");
-    resize(500, 400);
+    ui->setupUi(this);
 
-    chatDisplay = new QTextEdit(this);
-    chatDisplay->setReadOnly(true);
-
-    messageInput = new QLineEdit(this);
-    messageInput->setPlaceholderText("Type a message");
-
-    sendButton = new QPushButton("Send", this);
-    groupButton = new QPushButton("Groups", this);
-
-    refreshTimer = new QTimer(this);
-
-    QHBoxLayout* buttonLayout = new QHBoxLayout();
-    buttonLayout->addWidget(sendButton);
-    buttonLayout->addWidget(groupButton);
-
-    QVBoxLayout* layout = new QVBoxLayout(this);
-    layout->addWidget(chatDisplay);
-    layout->addWidget(messageInput);
-    layout->addLayout(buttonLayout);
-
-    connect(sendButton, &QPushButton::clicked,
+    connect(ui->sendButton, &QPushButton::clicked,
             this, [this]() { onSendClicked(); });
 
-    connect(groupButton, &QPushButton::clicked,
+    connect(ui->groupButton, &QPushButton::clicked,
             this, [this]() { onOpenGroupWindow(); });
 
-    connect(messageInput, &QLineEdit::returnPressed,
+    connect(ui->messageInput, &QLineEdit::returnPressed,
             this, [this]() { onSendClicked(); });
 
     connect(refreshTimer, &QTimer::timeout,
@@ -54,8 +29,12 @@ ChatWindow::ChatWindow(std::shared_ptr<ChatController> controller, QWidget* pare
     refreshTimer->start(200);
 }
 
+ChatWindow::~ChatWindow() {
+    delete ui;
+}
+
 void ChatWindow::onSendClicked() {
-    QString qContent = messageInput->text().trimmed();
+    QString qContent = ui->messageInput->text().trimmed();
     std::string content = qContent.toStdString();
 
     if (content.empty()) {
@@ -63,7 +42,7 @@ void ChatWindow::onSendClicked() {
     }
 
     if (controller->sendPublicMessage(content)) {
-        messageInput->clear();
+        ui->messageInput->clear();
         refreshMessages();
     }
 }
@@ -83,12 +62,12 @@ void ChatWindow::refreshMessages() {
 
     QString newText = lines.join("\n");
 
-    if (chatDisplay->toPlainText() == newText) {
+    if (ui->chatDisplay->toPlainText() == newText) {
         return;
     }
 
-    chatDisplay->setPlainText(newText);
-    chatDisplay->verticalScrollBar()->setValue(
-        chatDisplay->verticalScrollBar()->maximum()
+    ui->chatDisplay->setPlainText(newText);
+    ui->chatDisplay->verticalScrollBar()->setValue(
+        ui->chatDisplay->verticalScrollBar()->maximum()
     );
 }

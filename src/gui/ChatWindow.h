@@ -4,24 +4,22 @@
 #include <QWidget>
 #include <memory>
 
-class QTextEdit;
-class QLineEdit;
-class QPushButton;
 class QTimer;
 class ChatController;
 
+namespace Ui {
+class ChatWindow;
+}
+
 class ChatWindow : public QWidget {
 private:
-    QTextEdit* chatDisplay;
-    QLineEdit* messageInput;
-    QPushButton* sendButton;
-    QPushButton* groupButton;
+    Ui::ChatWindow* ui;
     QTimer* refreshTimer;
-
     std::shared_ptr<ChatController> controller;
 
 public:
     explicit ChatWindow(std::shared_ptr<ChatController> controller, QWidget* parent = nullptr);
+    ~ChatWindow();
 
 private:
     void onSendClicked();

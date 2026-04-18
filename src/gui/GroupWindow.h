@@ -1,35 +1,25 @@
 #ifndef GROUPWINDOW_H
 #define GROUPWINDOW_H
 
-#include <QWidget>
+#include <QDialog>
 #include <memory>
 
-class QLineEdit;
-class QPushButton;
-class QLabel;
-class QTextEdit;
-class QComboBox;
 class QTimer;
 class ChatController;
 
-class GroupWindow : public QWidget {
+namespace Ui {
+class Dialog;
+}
+
+class GroupWindow : public QDialog {
 private:
-    QLineEdit* groupNameInput;
-    QPushButton* createButton;
-    QPushButton* joinButton;
-
-    QComboBox* groupSelector;
-    QTextEdit* groupDisplay;
-    QLineEdit* groupMessageInput;
-    QPushButton* sendButton;
-
-    QLabel* statusLabel;
+    Ui::Dialog* ui;
     QTimer* refreshTimer;
-
     std::shared_ptr<ChatController> controller;
 
 public:
     explicit GroupWindow(std::shared_ptr<ChatController> controller, QWidget* parent = nullptr);
+    ~GroupWindow();
 
 private:
     void onCreateClicked();

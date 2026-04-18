@@ -4,21 +4,20 @@
 #include <QWidget>
 #include <memory>
 
-class QLineEdit;
-class QPushButton;
-class QLabel;
+namespace Ui {
+class LoginWindow;
+}
+
 class ChatController;
 
 class LoginWindow : public QWidget {
 private:
-    QLineEdit* usernameInput;
-    QPushButton* connectButton;
-    QLabel* statusLabel;
-
+    Ui::LoginWindow* ui;
     std::shared_ptr<ChatController> controller;
 
 public:
     explicit LoginWindow(std::shared_ptr<ChatController> controller, QWidget* parent = nullptr);
+    ~LoginWindow();
 
 private:
     void onConnectClicked();

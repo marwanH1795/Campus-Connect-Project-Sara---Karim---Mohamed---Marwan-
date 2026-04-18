@@ -191,6 +191,8 @@ border-radius: 15px;</string>
   <zorder>frame</zorder>
   <zorder>layoutWidget</zorder>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>
