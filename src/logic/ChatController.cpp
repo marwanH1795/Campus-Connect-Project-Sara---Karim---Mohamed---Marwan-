@@ -1,6 +1,12 @@
 #include "ChatController.h"
 #include "Message.h"
 
+#include <QTime>
+
+static std::string currentTimestamp() {
+    return QTime::currentTime().toString("hh:mm").toStdString();
+}
+
 ChatController::ChatController(std::shared_ptr<INetworkClient> net)
     : network(net)
 {
@@ -29,7 +35,7 @@ bool ChatController::sendPublicMessage(const std::string& content) {
                 "",
                 "",
                 content,
-                "");
+                currentTimestamp());
 
     network->sendMessage(msg.toJson());
     return true;
@@ -45,7 +51,7 @@ bool ChatController::createGroup(const std::string& groupId) {
                 "",
                 groupId,
                 "",
-                "");
+                currentTimestamp());
 
     network->sendMessage(msg.toJson());
     return true;
@@ -61,7 +67,7 @@ bool ChatController::joinGroup(const std::string& groupId) {
                 "",
                 groupId,
                 "",
-                "");
+                currentTimestamp());
 
     network->sendMessage(msg.toJson());
     return true;
@@ -81,7 +87,7 @@ bool ChatController::sendGroupMessage(const std::string& groupId, const std::str
                 "",
                 groupId,
                 content,
-                "");
+                currentTimestamp());
 
     network->sendMessage(msg.toJson());
     return true;

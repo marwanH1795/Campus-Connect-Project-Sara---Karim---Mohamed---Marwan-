@@ -2,8 +2,8 @@
 #define GROUPWINDOW_H
 
 #include <QDialog>
-#include <memory>
 #include <QString>
+#include <memory>
 
 class QTimer;
 class ChatController;
@@ -19,6 +19,7 @@ private:
     std::shared_ptr<ChatController> controller;
 
     QString lastRenderedHtml;
+    QString lastSelectedGroup;
 
 public:
     explicit GroupWindow(std::shared_ptr<ChatController> controller, QWidget* parent = nullptr);

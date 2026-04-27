@@ -26,7 +26,6 @@ public:
     bool sendGroupMessage(const std::string& groupId, const std::string& content);
 
     ChatState& getState();
-
     std::string getCurrentUsername() const;
 };
 
