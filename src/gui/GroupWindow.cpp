@@ -4,10 +4,14 @@
 #include "ui_GroupWindow.h"
 
 #include <QTimer>
-#include <QStringList>
+#include <QScrollBar>
+#include <QTime>
 
 GroupWindow::GroupWindow(std::shared_ptr<ChatController> controller, QWidget* parent)
-    : QDialog(parent), ui(new Ui::Dialog), refreshTimer(new QTimer(this)), controller(controller)
+    : QDialog(parent),
+      ui(new Ui::Dialog),
+      refreshTimer(new QTimer(this)),
+      controller(controller)
 {
     ui->setupUi(this);
 
@@ -29,6 +33,9 @@ GroupWindow::GroupWindow(std::shared_ptr<ChatController> controller, QWidget* pa
     connect(ui->groupSelector, &QComboBox::currentTextChanged,
             this, [this]() { refreshMessages(); });
 
+    connect(ui->groupMessageInput, &QLineEdit::textChanged,
+            this, [this]() { refreshMessages(); });
+
     connect(refreshTimer, &QTimer::timeout,
             this, [this]() {
                 refreshGroups();
@@ -37,7 +44,7 @@ GroupWindow::GroupWindow(std::shared_ptr<ChatController> controller, QWidget* pa
 
     refreshGroups();
     refreshMessages();
-    refreshTimer->start(300);
+    refreshTimer->start(250);
 }
 
 GroupWindow::~GroupWindow() {
@@ -55,8 +62,6 @@ void GroupWindow::onCreateClicked() {
     if (controller->createGroup(groupName.toStdString())) {
         ui->statusLabel->setText("Created group: " + groupName);
         ui->groupNameInput->clear();
-    } else {
-        ui->statusLabel->setText("Failed to create group");
     }
 }
 
@@ -71,16 +76,14 @@ void GroupWindow::onJoinClicked() {
     if (controller->joinGroup(groupName.toStdString())) {
         ui->statusLabel->setText("Joined group: " + groupName);
         ui->groupNameInput->clear();
-    } else {
-        ui->statusLabel->setText("Failed to join group");
     }
 }
 
 void GroupWindow::onSendClicked() {
-    QString selectedGroup = ui->groupSelector->currentText().trimmed();
+    QString group = ui->groupSelector->currentText().trimmed();
     QString content = ui->groupMessageInput->text().trimmed();
 
-    if (selectedGroup.isEmpty()) {
+    if (group.isEmpty()) {
         ui->statusLabel->setText("Select a group first");
         return;
     }
@@ -90,12 +93,9 @@ void GroupWindow::onSendClicked() {
         return;
     }
 
-    if (controller->sendGroupMessage(selectedGroup.toStdString(), content.toStdString())) {
+    if (controller->sendGroupMessage(group.toStdString(), content.toStdString())) {
         ui->groupMessageInput->clear();
-        ui->statusLabel->setText("Sent to group: " + selectedGroup);
         refreshMessages();
-    } else {
-        ui->statusLabel->setText("Failed to send group message");
     }
 }
 
@@ -103,23 +103,11 @@ void GroupWindow::refreshGroups() {
     auto groups = controller->getState().getJoinedGroups();
 
     QString current = ui->groupSelector->currentText();
-    QStringList newGroups;
-
-    for (const auto& group : groups) {
-        newGroups << QString::fromStdString(group);
-    }
-
-    QStringList existing;
-    for (int i = 0; i < ui->groupSelector->count(); ++i) {
-        existing << ui->groupSelector->itemText(i);
-    }
-
-    if (existing == newGroups) {
-        return;
-    }
-
     ui->groupSelector->clear();
-    ui->groupSelector->addItems(newGroups);
+
+    for (const auto& g : groups) {
+        ui->groupSelector->addItem(QString::fromStdString(g));
+    }
 
     int index = ui->groupSelector->findText(current);
     if (index >= 0) {
@@ -128,25 +116,68 @@ void GroupWindow::refreshGroups() {
 }
 
 void GroupWindow::refreshMessages() {
-    QString selectedGroup = ui->groupSelector->currentText().trimmed();
+    QString group = ui->groupSelector->currentText().trimmed();
 
-    if (selectedGroup.isEmpty()) {
+    if (group.isEmpty()) {
         ui->groupDisplay->clear();
         return;
     }
 
-    auto messages = controller->getState().getGroupMessagesForGroup(selectedGroup.toStdString());
+    auto messages = controller->getState().getGroupMessagesForGroup(group.toStdString());
 
-    QStringList lines;
+    QString currentUser = QString::fromStdString(controller->getCurrentUsername()).toLower();
+
+    QScrollBar* scrollBar = ui->groupDisplay->verticalScrollBar();
+    bool shouldAutoScroll = scrollBar->value() >= scrollBar->maximum() - 25;
+
+    QString html;
+    html += "<html><body style='background:#151525; color:white; font-family:Arial;'>";
+
     for (const auto& msg : messages) {
-        lines << QString::fromStdString(msg.getSender() + ": " + msg.getContent());
+        QString sender = QString::fromStdString(msg.getSender()).toHtmlEscaped();
+        QString senderLower = sender.toLower();
+        QString content = QString::fromStdString(msg.getContent()).toHtmlEscaped();
+        QString time = QTime::currentTime().toString("hh:mm");
+
+        bool isMe = (senderLower == currentUser);
+
+        QString align = isMe ? "right" : "left";
+        QString bubble = isMe ? "#3fcf8e" : "#2b2b3d";
+
+        html += QString(
+            "<table width='100%' cellpadding='6'>"
+            "<tr><td align='%1'>"
+            "<table width='55%' cellpadding='10' style='background:%2; border-radius:16px;'>"
+            "<tr><td>"
+            "<b>%3</b><br>%4<br>"
+            "<span style='font-size:10px; color:#aaa;'>%5</span>"
+            "</td></tr></table>"
+            "</td></tr></table>"
+        )
+        .arg(align)
+        .arg(bubble)
+        .arg(sender)
+        .arg(content)
+        .arg(time);
     }
 
-    QString newText = lines.join("\n");
-
-    if (ui->groupDisplay->toPlainText() == newText) {
-        return;
+    // typing indicator
+    if (!ui->groupMessageInput->text().trimmed().isEmpty()) {
+        html += QString(
+            "<div style='text-align:right; color:#888; font-size:12px;'>%1 is typing...</div>"
+        ).arg(QString::fromStdString(controller->getCurrentUsername()));
     }
 
-    ui->groupDisplay->setPlainText(newText);
+    html += "</body></html>";
+
+    if (html == lastRenderedHtml) return;
+
+    lastRenderedHtml = html;
+    ui->groupDisplay->setHtml(html);
+
+    if (shouldAutoScroll) {
+        ui->groupDisplay->verticalScrollBar()->setValue(
+            ui->groupDisplay->verticalScrollBar()->maximum()
+        );
+    }
 }

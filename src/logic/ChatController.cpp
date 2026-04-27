@@ -107,3 +107,7 @@ void ChatController::handleIncomingMessage(const std::string& json) {
 ChatState& ChatController::getState() {
     return state;
 }
+
+std::string ChatController::getCurrentUsername() const {
+    return state.getCurrentUser();
+}

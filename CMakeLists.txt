@@ -11,6 +11,9 @@ set(CMAKE_AUTORCC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Core Network Gui)
 
+# -----------------------------
+# Client application
+# -----------------------------
 add_executable(app
     src/main.cpp
 
@@ -55,12 +58,34 @@ target_link_libraries(app PRIVATE
     Qt6::Gui
 )
 
+# -----------------------------
+# Boost.Asio server
+# -----------------------------
 add_executable(server
     server.cpp
+
+    src/server/TcpServer.cpp
+    src/server/TcpServer.h
+
+    src/server/ClientSession.cpp
+    src/server/ClientSession.h
+
+    src/server/ServerController.cpp
+    src/server/ServerController.h
+
+    src/server/ServerState.cpp
+    src/server/ServerState.h
+)
+
+target_include_directories(server PRIVATE
+    src/server
+    C:/msys64/ucrt64/include
 )
 
 target_link_libraries(server PRIVATE
     Qt6::Core
     Qt6::Network
     Qt6::Gui
+    ws2_32
+    mswsock
 )

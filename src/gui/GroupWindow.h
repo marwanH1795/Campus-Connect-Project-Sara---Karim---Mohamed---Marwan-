@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <memory>
+#include <QString>
 
 class QTimer;
 class ChatController;
@@ -16,6 +17,8 @@ private:
     Ui::Dialog* ui;
     QTimer* refreshTimer;
     std::shared_ptr<ChatController> controller;
+
+    QString lastRenderedHtml;
 
 public:
     explicit GroupWindow(std::shared_ptr<ChatController> controller, QWidget* parent = nullptr);

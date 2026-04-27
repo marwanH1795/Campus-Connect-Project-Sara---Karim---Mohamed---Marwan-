@@ -2,6 +2,8 @@
 #define CHATCONTROLLER_H
 
 #include <memory>
+#include <string>
+
 #include "ChatState.h"
 #include "InputValidator.h"
 #include "../network/INetworkClient.h"
@@ -24,6 +26,8 @@ public:
     bool sendGroupMessage(const std::string& groupId, const std::string& content);
 
     ChatState& getState();
+
+    std::string getCurrentUsername() const;
 };
 
 #endif

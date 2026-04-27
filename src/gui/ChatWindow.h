@@ -2,6 +2,7 @@
 #define CHATWINDOW_H
 
 #include <QWidget>
+#include <QString>
 #include <memory>
 
 class QTimer;
@@ -16,6 +17,8 @@ private:
     Ui::ChatWindow* ui;
     QTimer* refreshTimer;
     std::shared_ptr<ChatController> controller;
+
+    QString lastRenderedHtml;
 
 public:
     explicit ChatWindow(std::shared_ptr<ChatController> controller, QWidget* parent = nullptr);
