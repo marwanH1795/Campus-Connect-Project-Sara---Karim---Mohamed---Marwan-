@@ -1,5 +1,6 @@
 #include <boost/asio/io_context.hpp>
-#include <iostream>
+#include <cstdio>
+#include <exception>
 
 #include "src/server/TcpServer.h"
 
@@ -10,8 +11,9 @@ int main() {
         TcpServer server(ioContext, 12345);
 
         ioContext.run();
-    } catch (const std::exception& e) {
-        std::cerr << "Server error: " << e.what() << std::endl;
+    }
+    catch (const std::exception& e) {
+        std::printf("Server error: %s\n", e.what());
     }
 
     return 0;

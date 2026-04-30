@@ -1,33 +1,35 @@
-#pragma once
+#ifndef CLIENTSESSION_H
+#define CLIENTSESSION_H
 
-#include <boost/asio/ip/tcp.hpp>
-
+#include <boost/asio.hpp>
 #include <array>
-#include <deque>
 #include <memory>
 #include <string>
+
+using boost::asio::ip::tcp;
 
 class ServerController;
 
 class ClientSession : public std::enable_shared_from_this<ClientSession> {
-public:
-    using tcp = boost::asio::ip::tcp;
+private:
+    tcp::socket socket;
+    std::shared_ptr<ServerController> controller;
 
-    ClientSession(tcp::socket socket, ServerController& controller);
+    std::array<char, 1024> readBuffer;
+    std::string pendingText;
+    std::string username;
+
+    void read();
+
+public:
+    ClientSession(tcp::socket socket,
+                  std::shared_ptr<ServerController> controller);
 
     void start();
-    void send(const std::string& jsonMessage);
+    void send(const std::string& msg);
 
-private:
-    void readData();
-    void processIncomingData(const std::string& data);
-    void writeNext();
-    void close();
-
-    tcp::socket socket;
-    ServerController& controller;
-
-    std::array<char, 4096> readBuffer;
-    std::string incomingBuffer;
-    std::deque<std::string> writeQueue;
+    void setUsername(const std::string& newUsername);
+    std::string getUsername() const;
 };
+
+#endif

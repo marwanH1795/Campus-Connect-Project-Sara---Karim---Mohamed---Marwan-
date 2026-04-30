@@ -6,6 +6,14 @@
 #include <memory>
 
 class QTimer;
+class QListWidget;
+class QLabel;
+class QPushButton;
+class QMediaCaptureSession;
+class QAudioInput;
+class QMediaRecorder;
+class QMediaPlayer;
+class QAudioOutput;
 class ChatController;
 
 namespace Ui {
@@ -13,20 +21,64 @@ class ChatWindow;
 }
 
 class ChatWindow : public QWidget {
+    Q_OBJECT
+
 private:
     Ui::ChatWindow* ui;
     QTimer* refreshTimer;
+    QTimer* recordingTimer;
+
+    QListWidget* userList;
+    QLabel* recordingLabel;
+    QPushButton* voiceButton;
+    QPushButton* deleteVoiceButton;
+
+    QMediaCaptureSession* audioSession;
+    QAudioInput* audioInput;
+    QMediaRecorder* audioRecorder;
+    QMediaPlayer* voicePlayer;
+    QAudioOutput* voiceOutput;
+
+    bool isRecording;
+    bool hasPendingVoice;
+    QString pendingVoiceFilePath;
+    int recordingSeconds;
+
     std::shared_ptr<ChatController> controller;
 
     QString lastRenderedHtml;
+    QString lastRenderedUsers;
 
 public:
     explicit ChatWindow(std::shared_ptr<ChatController> controller, QWidget* parent = nullptr);
     ~ChatWindow();
 
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override;
+
 private:
+    void setupUserListPanel();
+    void setupVoiceRecorder();
+    void setupVoicePlayer();
+
+    void refreshUserList();
+
     void onSendClicked();
+    void onVoiceClicked();
+    void onDeleteVoiceClicked();
     void onOpenGroupWindow();
+    void openPrivateWindow(const QString& username);
+
+    void startVoiceRecording();
+    void stopVoiceRecording();
+    void updateRecordingTimer();
+    void preparePendingVoice();
+    void clearPendingVoice();
+
+    bool sendTextMessage(const QString& text);
+    bool sendPendingVoiceMessage();
+
+    void playVoiceFile(const QString& filePath);
     void refreshMessages();
 };
 

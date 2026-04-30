@@ -11,6 +11,7 @@ enum class MessageType {
     CreateGroup,
     JoinGroup,
     GroupMessage,
+    Typing,
     UserList,
     Error,
     History,

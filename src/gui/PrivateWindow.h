@@ -1,5 +1,5 @@
-#ifndef GROUPWINDOW_H
-#define GROUPWINDOW_H
+#ifndef PRIVATEWINDOW_H
+#define PRIVATEWINDOW_H
 
 #include <QDialog>
 #include <QString>
@@ -8,7 +8,6 @@
 class QTimer;
 class QLabel;
 class QPushButton;
-class QListWidget;
 class QMediaCaptureSession;
 class QAudioInput;
 class QMediaRecorder;
@@ -17,20 +16,20 @@ class QAudioOutput;
 class ChatController;
 
 namespace Ui {
-class Dialog;
+class PrivateWindow;
 }
 
-class GroupWindow : public QDialog {
+class PrivateWindow : public QDialog {
     Q_OBJECT
 
 private:
-    Ui::Dialog* ui;
+    Ui::PrivateWindow* ui;
+    std::shared_ptr<ChatController> controller;
+    QString targetUser;
+
     QTimer* refreshTimer;
     QTimer* recordingTimer;
 
-    std::shared_ptr<ChatController> controller;
-
-    QListWidget* groupUsersList;
     QLabel* recordingLabel;
     QPushButton* voiceButton;
     QPushButton* deleteVoiceButton;
@@ -47,23 +46,21 @@ private:
     int recordingSeconds;
 
     QString lastRenderedHtml;
-    QString lastSelectedGroup;
-    QString lastRenderedUsers;
 
 public:
-    explicit GroupWindow(std::shared_ptr<ChatController> controller, QWidget* parent = nullptr);
-    ~GroupWindow();
+    explicit PrivateWindow(std::shared_ptr<ChatController> controller,
+                           const QString& targetUser,
+                           QWidget* parent = nullptr);
+    ~PrivateWindow();
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
-    void rebuildLayout();
+    void setupUiStyle();
     void setupVoiceRecorder();
     void setupVoicePlayer();
 
-    void onCreateClicked();
-    void onJoinClicked();
     void onSendClicked();
     void onVoiceClicked();
     void onDeleteVoiceClicked();
@@ -74,14 +71,10 @@ private:
     void preparePendingVoice();
     void clearPendingVoice();
 
-    bool sendTextMessage(const QString& selectedGroup, const QString& text);
-    bool sendPendingVoiceMessage(const QString& selectedGroup);
+    bool sendTextMessage(const QString& text);
+    bool sendPendingVoiceMessage();
 
     void playVoiceFile(const QString& filePath);
-
-    void refreshGroups();
-    void refreshGroupUsers();
-    void openPrivateWindow(const QString& username);
     void refreshMessages();
 };
 

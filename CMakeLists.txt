@@ -9,11 +9,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Core Network Gui)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Core Network Gui Multimedia)
 
-# -----------------------------
-# Client application
-# -----------------------------
 add_executable(app
     src/main.cpp
 
@@ -28,6 +25,13 @@ add_executable(app
     src/gui/GroupWindow.cpp
     src/gui/GroupWindow.h
     src/gui/GroupWindow.ui
+
+    src/gui/PrivateWindow.cpp
+    src/gui/PrivateWindow.h
+    src/gui/PrivateWindow.ui
+
+    src/gui/MessageRenderer.cpp
+    src/gui/MessageRenderer.h
 
     src/gui/resources.qrc
 
@@ -56,11 +60,9 @@ target_link_libraries(app PRIVATE
     Qt6::Core
     Qt6::Network
     Qt6::Gui
+    Qt6::Multimedia
 )
 
-# -----------------------------
-# Boost.Asio server
-# -----------------------------
 add_executable(server
     server.cpp
 
@@ -75,17 +77,24 @@ add_executable(server
 
     src/server/ServerState.cpp
     src/server/ServerState.h
+
+    src/logic/Message.cpp
+    src/logic/Message.h
+)
+
+set_target_properties(server PROPERTIES
+    LINKER_LANGUAGE CXX
 )
 
 target_include_directories(server PRIVATE
     src/server
+    src/logic
     C:/msys64/ucrt64/include
 )
 
 target_link_libraries(server PRIVATE
     Qt6::Core
-    Qt6::Network
-    Qt6::Gui
+    stdc++
     ws2_32
     mswsock
 )
