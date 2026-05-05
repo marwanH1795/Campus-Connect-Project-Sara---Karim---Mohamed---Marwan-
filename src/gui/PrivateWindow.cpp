@@ -75,11 +75,11 @@ PrivateWindow::PrivateWindow(std::shared_ptr<ChatController> controller,
                 );
             });
 
-    connect(refreshTimer, &QTimer::timeout,
-            this, [this]() { refreshMessages(); });
-
     connect(recordingTimer, &QTimer::timeout,
             this, [this]() { updateRecordingTimer(); });
+
+    connect(refreshTimer, &QTimer::timeout,
+            this, [this]() { refreshMessages(); });
 
     refreshMessages();
     refreshTimer->start(250);
@@ -109,7 +109,10 @@ bool PrivateWindow::eventFilter(QObject* watched, QEvent* event) {
 
             if (link.startsWith("voice:")) {
                 QString encodedPath = link.mid(QString("voice:").length());
-                QString filePath = QString::fromUtf8(QByteArray::fromBase64(encodedPath.toLatin1()));
+                QString filePath = QString::fromUtf8(
+                    QByteArray::fromBase64(encodedPath.toLatin1())
+                );
+
                 playVoiceFile(filePath);
                 return true;
             }
@@ -138,7 +141,7 @@ void PrivateWindow::setupUiStyle() {
     ui->inputLayout->insertWidget(2, voiceButton);
     ui->inputLayout->insertWidget(3, deleteVoiceButton);
 
-    QString buttonStyle =
+    QString roundButtonStyle =
         "QPushButton {"
         "background-color:#2a2b3d;"
         "color:#ffffff;"
@@ -154,8 +157,8 @@ void PrivateWindow::setupUiStyle() {
         "background-color:#7c6af7;"
         "}";
 
-    voiceButton->setStyleSheet(buttonStyle);
-    deleteVoiceButton->setStyleSheet(buttonStyle);
+    voiceButton->setStyleSheet(roundButtonStyle);
+    deleteVoiceButton->setStyleSheet(roundButtonStyle);
 
     recordingLabel->setStyleSheet(
         "QLabel {"
@@ -163,6 +166,37 @@ void PrivateWindow::setupUiStyle() {
         "font-weight:bold;"
         "font-size:13px;"
         "padding:0 8px;"
+        "}"
+    );
+
+    ui->messageInput->setStyleSheet(
+        "QLineEdit {"
+        "background-color:#2a2b3d;"
+        "color:#e0e0f0;"
+        "border:2px solid #4a4b6a;"
+        "border-radius:22px;"
+        "padding:0px 16px;"
+        "font-size:13px;"
+        "}"
+        "QLineEdit:focus {"
+        "border:2px solid #7c6af7;"
+        "}"
+    );
+
+    ui->sendButton->setStyleSheet(
+        "QPushButton {"
+        "background-color:#3ecf8e;"
+        "color:#101426;"
+        "border:none;"
+        "border-radius:23px;"
+        "font-size:13px;"
+        "font-weight:bold;"
+        "}"
+        "QPushButton:hover {"
+        "background-color:#55e0a3;"
+        "}"
+        "QPushButton:pressed {"
+        "background-color:#28a570;"
         "}"
     );
 }
@@ -193,9 +227,11 @@ void PrivateWindow::setupVoiceRecorder() {
                 isRecording = false;
                 hasPendingVoice = false;
                 recordingTimer->stop();
+
                 recordingLabel->hide();
                 deleteVoiceButton->hide();
                 voiceButton->setText("🎤");
+
                 ui->messageInput->setPlaceholderText("Voice failed: " + errorString);
             });
 }
@@ -381,20 +417,17 @@ bool PrivateWindow::sendPendingVoiceMessage() {
         return false;
     }
 
-    QString content =
-        "VOICE_FILE|" +
-        info.fileName() +
-        "|" +
-        pendingVoiceFilePath;
-
-    bool sent = controller->sendPrivateMessage(
+    bool sent = controller->sendPrivateAttachment(
         targetUser.toStdString(),
-        content.toStdString()
+        pendingVoiceFilePath,
+        "audio/wav"
     );
 
     if (sent) {
         controller->sendPrivateTypingStatus(targetUser.toStdString(), false);
         refreshMessages();
+    } else {
+        ui->messageInput->setPlaceholderText("Failed to send voice message");
     }
 
     return sent;
@@ -411,6 +444,8 @@ void PrivateWindow::playVoiceFile(const QString& filePath) {
     voicePlayer->stop();
     voicePlayer->setSource(QUrl::fromLocalFile(filePath));
     voicePlayer->play();
+
+    ui->messageInput->setPlaceholderText("Playing voice message...");
 }
 
 void PrivateWindow::refreshMessages() {

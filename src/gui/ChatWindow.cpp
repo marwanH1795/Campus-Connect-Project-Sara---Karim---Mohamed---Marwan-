@@ -1,4 +1,3 @@
-#include <QByteArray>
 #include "ChatWindow.h"
 #include "GroupWindow.h"
 #include "PrivateWindow.h"
@@ -29,6 +28,7 @@
 #include <QMouseEvent>
 #include <QTextCursor>
 #include <QTextCharFormat>
+#include <QByteArray>
 
 ChatWindow::ChatWindow(std::shared_ptr<ChatController> controller, QWidget* parent)
     : QWidget(parent),
@@ -56,7 +56,6 @@ ChatWindow::ChatWindow(std::shared_ptr<ChatController> controller, QWidget* pare
     setupVoicePlayer();
 
     ui->chatDisplay->setTextInteractionFlags(Qt::TextBrowserInteraction);
-
     ui->chatDisplay->viewport()->installEventFilter(this);
 
     connect(ui->sendButton, &QPushButton::clicked,
@@ -135,7 +134,10 @@ bool ChatWindow::eventFilter(QObject* watched, QEvent* event) {
 
             if (link.startsWith("voice:")) {
                 QString encodedPath = link.mid(QString("voice:").length());
-                QString filePath = QString::fromUtf8(QByteArray::fromBase64(encodedPath.toLatin1()));
+                QString filePath = QString::fromUtf8(
+                    QByteArray::fromBase64(encodedPath.toLatin1())
+                );
+
                 playVoiceFile(filePath);
                 return true;
             }
@@ -414,21 +416,21 @@ void ChatWindow::refreshUserList() {
 }
 
 void ChatWindow::onSendClicked() {
-  if (hasPendingVoice) {
-    if (sendPendingVoiceMessage()) {
-        pendingVoiceFilePath.clear();
-        hasPendingVoice = false;
-        recordingSeconds = 0;
+    if (hasPendingVoice) {
+        if (sendPendingVoiceMessage()) {
+            pendingVoiceFilePath.clear();
+            hasPendingVoice = false;
+            recordingSeconds = 0;
 
-        recordingLabel->setText("00:00");
-        recordingLabel->hide();
-        deleteVoiceButton->hide();
-        voiceButton->setText("🎤");
-        ui->messageInput->setPlaceholderText("Type a message...");
+            recordingLabel->setText("00:00");
+            recordingLabel->hide();
+            deleteVoiceButton->hide();
+            voiceButton->setText("🎤");
+            ui->messageInput->setPlaceholderText("Type a message...");
+        }
+
+        return;
     }
-
-    return;
-}
 
     QString text = ui->messageInput->text().trimmed();
 
@@ -590,22 +592,20 @@ bool ChatWindow::sendPendingVoiceMessage() {
         return false;
     }
 
-    QString content =
-        "VOICE_FILE|" +
-        info.fileName() +
-        "|" +
-        pendingVoiceFilePath;
-
-    bool sent = controller->sendPublicMessage(content.toStdString());
+    bool sent = controller->sendPublicAttachment(
+        pendingVoiceFilePath,
+        "audio/wav"
+    );
 
     if (sent) {
         controller->sendTypingStatus(false);
         refreshMessages();
+    } else {
+        ui->messageInput->setPlaceholderText("Failed to send voice message");
     }
 
     return sent;
 }
-
 
 void ChatWindow::playVoiceFile(const QString& filePath) {
     QFileInfo info(filePath);

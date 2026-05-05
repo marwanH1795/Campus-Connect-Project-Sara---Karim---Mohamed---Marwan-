@@ -461,7 +461,10 @@ bool GroupWindow::eventFilter(QObject* watched, QEvent* event) {
 
             if (link.startsWith("voice:")) {
                 QString encodedPath = link.mid(QString("voice:").length());
-                QString filePath = QString::fromUtf8(QByteArray::fromBase64(encodedPath.toLatin1()));
+                QString filePath = QString::fromUtf8(
+                    QByteArray::fromBase64(encodedPath.toLatin1())
+                );
+
                 playVoiceFile(filePath);
                 return true;
             }
@@ -764,20 +767,14 @@ bool GroupWindow::sendPendingVoiceMessage(const QString& selectedGroup) {
         return false;
     }
 
-    QString content =
-        "VOICE_FILE|" +
-        info.fileName() +
-        "|" +
-        pendingVoiceFilePath;
-
-    controller->sendGroupTypingStatus(selectedGroup.toStdString(), false);
-
-    bool sent = controller->sendGroupMessage(
+    bool sent = controller->sendGroupAttachment(
         selectedGroup.toStdString(),
-        content.toStdString()
+        pendingVoiceFilePath,
+        "audio/wav"
     );
 
     if (sent) {
+        controller->sendGroupTypingStatus(selectedGroup.toStdString(), false);
         ui->statusLabel->setText("Voice sent to group: " + selectedGroup);
         refreshMessages();
     } else {
