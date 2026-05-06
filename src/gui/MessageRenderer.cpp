@@ -2,38 +2,70 @@
 
 #include <QTime>
 #include <QByteArray>
+#include <QUrl>
+#include <QFileInfo>
 
-static bool isVoiceFileMessage(const QString& content) {
-    return content.startsWith("VOICE_FILE|");
+static QString protectPercent(QString text) {
+    return text.replace("%", "%%");
 }
 
-static QString voiceFileName(const QString& content) {
-    QString rest = content.mid(QString("VOICE_FILE|").length());
-    int separatorIndex = rest.indexOf('|');
-
-    if (separatorIndex <= 0) {
-        return "voice message";
-    }
-
-    return rest.left(separatorIndex).toHtmlEscaped();
+static bool startsWithAttachmentPrefix(const QString& content) {
+    return content.startsWith("VOICE_FILE|") ||
+           content.startsWith("IMAGE_FILE|") ||
+           content.startsWith("VIDEO_FILE|") ||
+           content.startsWith("FILE_ATTACHMENT|");
 }
 
-static QString voiceFilePath(const QString& content) {
-    QString rest = content.mid(QString("VOICE_FILE|").length());
-    int separatorIndex = rest.indexOf('|');
+static QString attachmentPrefix(const QString& content) {
+    int firstSeparator = content.indexOf('|');
 
-    if (separatorIndex <= 0) {
+    if (firstSeparator <= 0) {
         return "";
     }
 
-    return rest.mid(separatorIndex + 1);
+    return content.left(firstSeparator);
+}
+
+static QString attachmentFileName(const QString& content) {
+    int firstSeparator = content.indexOf('|');
+
+    if (firstSeparator < 0) {
+        return "attachment";
+    }
+
+    int secondSeparator = content.indexOf('|', firstSeparator + 1);
+
+    if (secondSeparator < 0) {
+        return "attachment";
+    }
+
+    return content.mid(firstSeparator + 1, secondSeparator - firstSeparator - 1).toHtmlEscaped();
+}
+
+static QString attachmentFilePath(const QString& content) {
+    int firstSeparator = content.indexOf('|');
+
+    if (firstSeparator < 0) {
+        return "";
+    }
+
+    int secondSeparator = content.indexOf('|', firstSeparator + 1);
+
+    if (secondSeparator < 0) {
+        return "";
+    }
+
+    return content.mid(secondSeparator + 1);
+}
+
+static QString encodedPathForLink(const QString& filePath) {
+    return QString::fromLatin1(filePath.toUtf8().toBase64());
 }
 
 static QString renderVoiceContent(const QString& content) {
-    QString name = voiceFileName(content);
-    QString path = voiceFilePath(content);
-
-    QString encodedPath = QString::fromLatin1(path.toUtf8().toBase64());
+    QString name = attachmentFileName(content);
+    QString path = attachmentFilePath(content);
+    QString encodedPath = encodedPathForLink(path);
 
     return QString(
         "<a href='voice:%1' style='text-decoration:none;'>"
@@ -44,6 +76,71 @@ static QString renderVoiceContent(const QString& content) {
         "</a>"
         "<div style='font-size:10px; margin-top:8px; opacity:0.85;'>%2</div>"
     ).arg(encodedPath, name);
+}
+
+static QString renderImageContent(const QString& content) {
+    QString name = attachmentFileName(content);
+    QString path = attachmentFilePath(content);
+    QString encodedPath = encodedPathForLink(path);
+    QString fileUrl = QUrl::fromLocalFile(path).toString();
+
+    return QString(
+        "<a href='open:%1' style='text-decoration:none;'>"
+        "<img src='%2' style='max-width:280px; max-height:220px; "
+        "border-radius:14px; border:1px solid rgba(255,255,255,0.25);'/>"
+        "</a>"
+        "<div style='font-size:10px; margin-top:8px; opacity:0.85;'>🖼 %3</div>"
+    ).arg(encodedPath, fileUrl, name);
+}
+
+static QString renderVideoContent(const QString& content) {
+    QString name = attachmentFileName(content);
+    QString path = attachmentFilePath(content);
+    QString encodedPath = encodedPathForLink(path);
+
+    return QString(
+        "<a href='open:%1' style='text-decoration:none;'>"
+        "<span style='background-color:#ffffff; color:#111827; "
+        "padding:7px 12px; border-radius:14px; font-weight:bold;'>"
+        "🎬 Open video"
+        "</span>"
+        "</a>"
+        "<div style='font-size:10px; margin-top:8px; opacity:0.85;'>%2</div>"
+    ).arg(encodedPath, name);
+}
+
+static QString renderFileContent(const QString& content) {
+    QString name = attachmentFileName(content);
+    QString path = attachmentFilePath(content);
+    QString encodedPath = encodedPathForLink(path);
+
+    return QString(
+        "<a href='open:%1' style='text-decoration:none;'>"
+        "<span style='background-color:#ffffff; color:#111827; "
+        "padding:7px 12px; border-radius:14px; font-weight:bold;'>"
+        "📎 Open file"
+        "</span>"
+        "</a>"
+        "<div style='font-size:10px; margin-top:8px; opacity:0.85;'>%2</div>"
+    ).arg(encodedPath, name);
+}
+
+static QString renderAttachmentContent(const QString& content) {
+    QString prefix = attachmentPrefix(content);
+
+    if (prefix == "VOICE_FILE") {
+        return renderVoiceContent(content);
+    }
+
+    if (prefix == "IMAGE_FILE") {
+        return renderImageContent(content);
+    }
+
+    if (prefix == "VIDEO_FILE") {
+        return renderVideoContent(content);
+    }
+
+    return renderFileContent(content);
 }
 
 QString MessageRenderer::renderMessage(const Message& msg, const QString& currentUser)
@@ -72,14 +169,16 @@ QString MessageRenderer::renderMessage(const Message& msg, const QString& curren
         bubbleColor = isMe ? "#7c6af7" : "#37306b";
     }
 
-    if (isVoiceFileMessage(rawContent)) {
-        content = renderVoiceContent(rawContent);
+    if (startsWithAttachmentPrefix(rawContent)) {
+        content = renderAttachmentContent(rawContent);
+    } else {
+        content = protectPercent(content);
     }
 
     return QString(
         "<table width='100%' cellpadding='0' cellspacing='0'>"
         "<tr><td align='%1'>"
-        "<table cellpadding='0' cellspacing='0' style='max-width:380px;'>"
+        "<table cellpadding='0' cellspacing='0' style='max-width:420px;'>"
         "<tr><td style='background:%2; color:%3; padding:12px 16px; "
         "border-radius:18px; font-size:14px; line-height:1.4;'>"
         "<div style='font-weight:bold; color:%4; margin-bottom:8px;'>%5</div>"
@@ -106,14 +205,16 @@ QString MessageRenderer::renderGroupMessage(const QString& sender,
     QString nameColor = "#ffffff";
     QString timeColor = "#e5e7eb";
 
-    if (isVoiceFileMessage(rawContent)) {
-        safeContent = renderVoiceContent(rawContent);
+    if (startsWithAttachmentPrefix(rawContent)) {
+        safeContent = renderAttachmentContent(rawContent);
+    } else {
+        safeContent = protectPercent(safeContent);
     }
 
     return QString(
         "<table width='100%' cellpadding='0' cellspacing='0'>"
         "<tr><td align='%1'>"
-        "<table cellpadding='0' cellspacing='0' style='max-width:380px;'>"
+        "<table cellpadding='0' cellspacing='0' style='max-width:420px;'>"
         "<tr><td style='background:%2; color:%3; padding:12px 16px; "
         "border-radius:18px; font-size:14px; line-height:1.4;'>"
         "<div style='font-weight:bold; color:%4; margin-bottom:8px;'>%5</div>"

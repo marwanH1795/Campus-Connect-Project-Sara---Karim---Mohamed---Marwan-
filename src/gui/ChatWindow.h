@@ -32,6 +32,7 @@ private:
     QLabel* recordingLabel;
     QPushButton* voiceButton;
     QPushButton* deleteVoiceButton;
+    QPushButton* attachmentButton;
 
     QMediaCaptureSession* audioSession;
     QAudioInput* audioInput;
@@ -66,6 +67,7 @@ private:
     void onSendClicked();
     void onVoiceClicked();
     void onDeleteVoiceClicked();
+    void onAttachmentClicked();
     void onOpenGroupWindow();
     void openPrivateWindow(const QString& username);
 
@@ -77,8 +79,11 @@ private:
 
     bool sendTextMessage(const QString& text);
     bool sendPendingVoiceMessage();
+    bool sendAttachmentFile(const QString& filePath);
 
     void playVoiceFile(const QString& filePath);
+    void openAttachmentFile(const QString& filePath);
+
     void refreshMessages();
 };
 

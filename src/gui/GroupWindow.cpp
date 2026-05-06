@@ -18,6 +18,10 @@
 #include <QWidget>
 #include <QComboBox>
 #include <QLineEdit>
+#include <QFileDialog>
+#include <QMimeDatabase>
+#include <QMimeType>
+#include <QDesktopServices>
 #include <QMediaCaptureSession>
 #include <QAudioInput>
 #include <QMediaRecorder>
@@ -45,6 +49,7 @@ GroupWindow::GroupWindow(std::shared_ptr<ChatController> controller, QWidget* pa
       recordingLabel(nullptr),
       voiceButton(nullptr),
       deleteVoiceButton(nullptr),
+      attachmentButton(nullptr),
       audioSession(nullptr),
       audioInput(nullptr),
       audioRecorder(nullptr),
@@ -63,26 +68,15 @@ GroupWindow::GroupWindow(std::shared_ptr<ChatController> controller, QWidget* pa
     ui->groupDisplay->setTextInteractionFlags(Qt::TextBrowserInteraction);
     ui->groupDisplay->viewport()->installEventFilter(this);
 
-    connect(ui->createButton, &QPushButton::clicked,
-            this, [this]() { onCreateClicked(); });
+    connect(ui->createButton, &QPushButton::clicked, this, [this]() { onCreateClicked(); });
+    connect(ui->joinButton, &QPushButton::clicked, this, [this]() { onJoinClicked(); });
+    connect(ui->sendButton, &QPushButton::clicked, this, [this]() { onSendClicked(); });
+    connect(voiceButton, &QPushButton::clicked, this, [this]() { onVoiceClicked(); });
+    connect(deleteVoiceButton, &QPushButton::clicked, this, [this]() { onDeleteVoiceClicked(); });
+    connect(attachmentButton, &QPushButton::clicked, this, [this]() { onAttachmentClicked(); });
 
-    connect(ui->joinButton, &QPushButton::clicked,
-            this, [this]() { onJoinClicked(); });
-
-    connect(ui->sendButton, &QPushButton::clicked,
-            this, [this]() { onSendClicked(); });
-
-    connect(voiceButton, &QPushButton::clicked,
-            this, [this]() { onVoiceClicked(); });
-
-    connect(deleteVoiceButton, &QPushButton::clicked,
-            this, [this]() { onDeleteVoiceClicked(); });
-
-    connect(ui->groupNameInput, &QLineEdit::returnPressed,
-            this, [this]() { onJoinClicked(); });
-
-    connect(ui->groupMessageInput, &QLineEdit::returnPressed,
-            this, [this]() { onSendClicked(); });
+    connect(ui->groupNameInput, &QLineEdit::returnPressed, this, [this]() { onJoinClicked(); });
+    connect(ui->groupMessageInput, &QLineEdit::returnPressed, this, [this]() { onSendClicked(); });
 
     connect(ui->groupMessageInput, &QLineEdit::textChanged,
             this, [this](const QString& text) {
@@ -138,8 +132,7 @@ GroupWindow::GroupWindow(std::shared_ptr<ChatController> controller, QWidget* pa
                 openPrivateWindow(text);
             });
 
-    connect(recordingTimer, &QTimer::timeout,
-            this, [this]() { updateRecordingTimer(); });
+    connect(recordingTimer, &QTimer::timeout, this, [this]() { updateRecordingTimer(); });
 
     connect(refreshTimer, &QTimer::timeout,
             this, [this]() {
@@ -252,17 +245,9 @@ void GroupWindow::rebuildLayout() {
         "border:none;"
         "font-size:12px;"
         "}"
-        "QListWidget::item {"
-        "padding:8px;"
-        "border-radius:8px;"
-        "}"
-        "QListWidget::item:hover {"
-        "background-color:#2a2b3d;"
-        "}"
-        "QListWidget::item:selected {"
-        "background-color:#7c6af7;"
-        "color:white;"
-        "}"
+        "QListWidget::item { padding:8px; border-radius:8px; }"
+        "QListWidget::item:hover { background-color:#2a2b3d; }"
+        "QListWidget::item:selected { background-color:#7c6af7; color:white; }"
     );
 
     QLabel* usersHint = new QLabel("Click user\nto open private chat", usersPanel);
@@ -318,6 +303,11 @@ void GroupWindow::rebuildLayout() {
     deleteVoiceButton->setToolTip("Delete recorded voice");
     deleteVoiceButton->hide();
 
+    attachmentButton = new QPushButton("📎", this);
+    attachmentButton->setMinimumSize(46, 46);
+    attachmentButton->setMaximumSize(46, 46);
+    attachmentButton->setToolTip("Send image, video, or file");
+
     QString roundButtonStyle =
         "QPushButton {"
         "background-color:#2a2b3d;"
@@ -330,12 +320,11 @@ void GroupWindow::rebuildLayout() {
         "background-color:#3a3b55;"
         "border:2px solid #7c6af7;"
         "}"
-        "QPushButton:pressed {"
-        "background-color:#7c6af7;"
-        "}";
+        "QPushButton:pressed { background-color:#7c6af7; }";
 
     voiceButton->setStyleSheet(roundButtonStyle);
     deleteVoiceButton->setStyleSheet(roundButtonStyle);
+    attachmentButton->setStyleSheet(roundButtonStyle);
 
     ui->groupMessageInput->setStyleSheet(
         "QLineEdit {"
@@ -346,9 +335,7 @@ void GroupWindow::rebuildLayout() {
         "padding:0px 16px;"
         "font-size:13px;"
         "}"
-        "QLineEdit:focus {"
-        "border:2px solid #7c6af7;"
-        "}"
+        "QLineEdit:focus { border:2px solid #7c6af7; }"
     );
 
     ui->sendButton->setMinimumSize(105, 46);
@@ -362,12 +349,8 @@ void GroupWindow::rebuildLayout() {
         "font-size:13px;"
         "font-weight:bold;"
         "}"
-        "QPushButton:hover {"
-        "background-color:#55e0a3;"
-        "}"
-        "QPushButton:pressed {"
-        "background-color:#28a570;"
-        "}"
+        "QPushButton:hover { background-color:#55e0a3; }"
+        "QPushButton:pressed { background-color:#28a570; }"
     );
 
     ui->createButton->setStyleSheet(
@@ -399,9 +382,7 @@ void GroupWindow::rebuildLayout() {
         "padding:0px 16px;"
         "font-size:13px;"
         "}"
-        "QLineEdit:focus {"
-        "border:2px solid #7c6af7;"
-        "}"
+        "QLineEdit:focus { border:2px solid #7c6af7; }"
     );
 
     ui->groupSelector->setStyleSheet(
@@ -430,6 +411,7 @@ void GroupWindow::rebuildLayout() {
     inputLayout->addWidget(recordingLabel);
     inputLayout->addWidget(voiceButton);
     inputLayout->addWidget(deleteVoiceButton);
+    inputLayout->addWidget(attachmentButton);
     inputLayout->addWidget(ui->sendButton);
 
     root->addLayout(topRow);
@@ -461,11 +443,17 @@ bool GroupWindow::eventFilter(QObject* watched, QEvent* event) {
 
             if (link.startsWith("voice:")) {
                 QString encodedPath = link.mid(QString("voice:").length());
-                QString filePath = QString::fromUtf8(
-                    QByteArray::fromBase64(encodedPath.toLatin1())
-                );
+                QString filePath = QString::fromUtf8(QByteArray::fromBase64(encodedPath.toLatin1()));
 
                 playVoiceFile(filePath);
+                return true;
+            }
+
+            if (link.startsWith("open:")) {
+                QString encodedPath = link.mid(QString("open:").length());
+                QString filePath = QString::fromUtf8(QByteArray::fromBase64(encodedPath.toLatin1()));
+
+                openAttachmentFile(filePath);
                 return true;
             }
         }
@@ -621,6 +609,30 @@ void GroupWindow::onVoiceClicked() {
 
 void GroupWindow::onDeleteVoiceClicked() {
     clearPendingVoice();
+}
+
+void GroupWindow::onAttachmentClicked() {
+    QString selectedGroup = ui->groupSelector->currentText().trimmed();
+
+    if (selectedGroup.isEmpty()) {
+        ui->statusLabel->setText("Create or join a group first.");
+        return;
+    }
+
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        "Choose a file to send to group",
+        QDir::homePath(),
+        "All Files (*.*)"
+    );
+
+    if (filePath.isEmpty()) {
+        return;
+    }
+
+    if (!sendAttachmentFile(selectedGroup, filePath)) {
+        ui->statusLabel->setText("Failed to send attachment.");
+    }
 }
 
 void GroupWindow::startVoiceRecording() {
@@ -784,6 +796,34 @@ bool GroupWindow::sendPendingVoiceMessage(const QString& selectedGroup) {
     return sent;
 }
 
+bool GroupWindow::sendAttachmentFile(const QString& selectedGroup, const QString& filePath) {
+    QFileInfo info(filePath);
+
+    if (!info.exists() || info.size() <= 0) {
+        return false;
+    }
+
+    QMimeDatabase mimeDatabase;
+    QMimeType mimeType = mimeDatabase.mimeTypeForFile(filePath);
+
+    QString type = mimeType.isValid()
+        ? mimeType.name()
+        : "application/octet-stream";
+
+    bool sent = controller->sendGroupAttachment(
+        selectedGroup.toStdString(),
+        filePath,
+        type
+    );
+
+    if (sent) {
+        ui->statusLabel->setText("Attachment sent to group: " + selectedGroup);
+        refreshMessages();
+    }
+
+    return sent;
+}
+
 void GroupWindow::playVoiceFile(const QString& filePath) {
     QFileInfo info(filePath);
 
@@ -797,6 +837,17 @@ void GroupWindow::playVoiceFile(const QString& filePath) {
     voicePlayer->play();
 
     ui->groupMessageInput->setPlaceholderText("Playing voice message...");
+}
+
+void GroupWindow::openAttachmentFile(const QString& filePath) {
+    QFileInfo info(filePath);
+
+    if (!info.exists()) {
+        ui->groupMessageInput->setPlaceholderText("Attachment file not found");
+        return;
+    }
+
+    QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
 }
 
 void GroupWindow::refreshGroups() {

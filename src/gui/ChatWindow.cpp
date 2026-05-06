@@ -13,6 +13,10 @@
 #include <QLabel>
 #include <QFrame>
 #include <QPushButton>
+#include <QFileDialog>
+#include <QMimeDatabase>
+#include <QMimeType>
+#include <QDesktopServices>
 #include <QMediaCaptureSession>
 #include <QAudioInput>
 #include <QMediaRecorder>
@@ -39,6 +43,7 @@ ChatWindow::ChatWindow(std::shared_ptr<ChatController> controller, QWidget* pare
       recordingLabel(nullptr),
       voiceButton(nullptr),
       deleteVoiceButton(nullptr),
+      attachmentButton(nullptr),
       audioSession(nullptr),
       audioInput(nullptr),
       audioRecorder(nullptr),
@@ -69,6 +74,9 @@ ChatWindow::ChatWindow(std::shared_ptr<ChatController> controller, QWidget* pare
 
     connect(deleteVoiceButton, &QPushButton::clicked,
             this, [this]() { onDeleteVoiceClicked(); });
+
+    connect(attachmentButton, &QPushButton::clicked,
+            this, [this]() { onAttachmentClicked(); });
 
     connect(ui->messageInput, &QLineEdit::returnPressed,
             this, [this]() { onSendClicked(); });
@@ -139,6 +147,16 @@ bool ChatWindow::eventFilter(QObject* watched, QEvent* event) {
                 );
 
                 playVoiceFile(filePath);
+                return true;
+            }
+
+            if (link.startsWith("open:")) {
+                QString encodedPath = link.mid(QString("open:").length());
+                QString filePath = QString::fromUtf8(
+                    QByteArray::fromBase64(encodedPath.toLatin1())
+                );
+
+                openAttachmentFile(filePath);
                 return true;
             }
         }
@@ -222,6 +240,11 @@ void ChatWindow::setupUserListPanel() {
     deleteVoiceButton->setToolTip("Delete recorded voice");
     deleteVoiceButton->hide();
 
+    attachmentButton = new QPushButton("📎", this);
+    attachmentButton->setMinimumSize(46, 46);
+    attachmentButton->setMaximumSize(46, 46);
+    attachmentButton->setToolTip("Send image, video, or file");
+
     QString roundButtonStyle =
         "QPushButton {"
         "background-color:#2a2b3d;"
@@ -238,6 +261,7 @@ void ChatWindow::setupUserListPanel() {
 
     voiceButton->setStyleSheet(roundButtonStyle);
     deleteVoiceButton->setStyleSheet(roundButtonStyle);
+    attachmentButton->setStyleSheet(roundButtonStyle);
 
     ui->sendButton->setMinimumSize(105, 46);
     ui->sendButton->setMaximumSize(115, 46);
@@ -273,6 +297,7 @@ void ChatWindow::setupUserListPanel() {
     inputLayout->addWidget(recordingLabel);
     inputLayout->addWidget(voiceButton);
     inputLayout->addWidget(deleteVoiceButton);
+    inputLayout->addWidget(attachmentButton);
     inputLayout->addWidget(ui->sendButton);
     inputLayout->addWidget(ui->groupButton);
 
@@ -456,6 +481,23 @@ void ChatWindow::onDeleteVoiceClicked() {
     clearPendingVoice();
 }
 
+void ChatWindow::onAttachmentClicked() {
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        "Choose a file to send",
+        QDir::homePath(),
+        "All Files (*.*)"
+    );
+
+    if (filePath.isEmpty()) {
+        return;
+    }
+
+    if (!sendAttachmentFile(filePath)) {
+        ui->messageInput->setPlaceholderText("Failed to send attachment");
+    }
+}
+
 void ChatWindow::onOpenGroupWindow() {
     GroupWindow* groupWindow = new GroupWindow(controller);
     groupWindow->setAttribute(Qt::WA_DeleteOnClose);
@@ -607,6 +649,30 @@ bool ChatWindow::sendPendingVoiceMessage() {
     return sent;
 }
 
+bool ChatWindow::sendAttachmentFile(const QString& filePath) {
+    QFileInfo info(filePath);
+
+    if (!info.exists() || info.size() <= 0) {
+        return false;
+    }
+
+    QMimeDatabase mimeDatabase;
+    QMimeType mimeType = mimeDatabase.mimeTypeForFile(filePath);
+
+    QString type = mimeType.isValid()
+        ? mimeType.name()
+        : "application/octet-stream";
+
+    bool sent = controller->sendPublicAttachment(filePath, type);
+
+    if (sent) {
+        ui->messageInput->setPlaceholderText("Attachment sent");
+        refreshMessages();
+    }
+
+    return sent;
+}
+
 void ChatWindow::playVoiceFile(const QString& filePath) {
     QFileInfo info(filePath);
 
@@ -620,6 +686,17 @@ void ChatWindow::playVoiceFile(const QString& filePath) {
     voicePlayer->play();
 
     ui->messageInput->setPlaceholderText("Playing voice message...");
+}
+
+void ChatWindow::openAttachmentFile(const QString& filePath) {
+    QFileInfo info(filePath);
+
+    if (!info.exists()) {
+        ui->messageInput->setPlaceholderText("Attachment file not found");
+        return;
+    }
+
+    QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
 }
 
 void ChatWindow::refreshMessages() {

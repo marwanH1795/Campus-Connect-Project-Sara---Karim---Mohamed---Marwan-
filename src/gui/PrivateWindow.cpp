@@ -7,6 +7,10 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QScrollBar>
+#include <QFileDialog>
+#include <QMimeDatabase>
+#include <QMimeType>
+#include <QDesktopServices>
 #include <QMediaCaptureSession>
 #include <QAudioInput>
 #include <QMediaRecorder>
@@ -36,6 +40,7 @@ PrivateWindow::PrivateWindow(std::shared_ptr<ChatController> controller,
       recordingLabel(nullptr),
       voiceButton(nullptr),
       deleteVoiceButton(nullptr),
+      attachmentButton(nullptr),
       audioSession(nullptr),
       audioInput(nullptr),
       audioRecorder(nullptr),
@@ -63,6 +68,9 @@ PrivateWindow::PrivateWindow(std::shared_ptr<ChatController> controller,
 
     connect(deleteVoiceButton, &QPushButton::clicked,
             this, [this]() { onDeleteVoiceClicked(); });
+
+    connect(attachmentButton, &QPushButton::clicked,
+            this, [this]() { onAttachmentClicked(); });
 
     connect(ui->messageInput, &QLineEdit::returnPressed,
             this, [this]() { onSendClicked(); });
@@ -116,6 +124,16 @@ bool PrivateWindow::eventFilter(QObject* watched, QEvent* event) {
                 playVoiceFile(filePath);
                 return true;
             }
+
+            if (link.startsWith("open:")) {
+                QString encodedPath = link.mid(QString("open:").length());
+                QString filePath = QString::fromUtf8(
+                    QByteArray::fromBase64(encodedPath.toLatin1())
+                );
+
+                openAttachmentFile(filePath);
+                return true;
+            }
         }
     }
 
@@ -137,9 +155,15 @@ void PrivateWindow::setupUiStyle() {
     deleteVoiceButton->setToolTip("Delete recorded voice");
     deleteVoiceButton->hide();
 
+    attachmentButton = new QPushButton("📎", this);
+    attachmentButton->setMinimumSize(46, 46);
+    attachmentButton->setMaximumSize(46, 46);
+    attachmentButton->setToolTip("Send image, video, or file");
+
     ui->inputLayout->insertWidget(1, recordingLabel);
     ui->inputLayout->insertWidget(2, voiceButton);
     ui->inputLayout->insertWidget(3, deleteVoiceButton);
+    ui->inputLayout->insertWidget(4, attachmentButton);
 
     QString roundButtonStyle =
         "QPushButton {"
@@ -159,6 +183,7 @@ void PrivateWindow::setupUiStyle() {
 
     voiceButton->setStyleSheet(roundButtonStyle);
     deleteVoiceButton->setStyleSheet(roundButtonStyle);
+    attachmentButton->setStyleSheet(roundButtonStyle);
 
     recordingLabel->setStyleSheet(
         "QLabel {"
@@ -288,6 +313,23 @@ void PrivateWindow::onVoiceClicked() {
 
 void PrivateWindow::onDeleteVoiceClicked() {
     clearPendingVoice();
+}
+
+void PrivateWindow::onAttachmentClicked() {
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        "Choose a file to send privately",
+        QDir::homePath(),
+        "All Files (*.*)"
+    );
+
+    if (filePath.isEmpty()) {
+        return;
+    }
+
+    if (!sendAttachmentFile(filePath)) {
+        ui->messageInput->setPlaceholderText("Failed to send attachment");
+    }
 }
 
 void PrivateWindow::startVoiceRecording() {
@@ -433,6 +475,34 @@ bool PrivateWindow::sendPendingVoiceMessage() {
     return sent;
 }
 
+bool PrivateWindow::sendAttachmentFile(const QString& filePath) {
+    QFileInfo info(filePath);
+
+    if (!info.exists() || info.size() <= 0) {
+        return false;
+    }
+
+    QMimeDatabase mimeDatabase;
+    QMimeType mimeType = mimeDatabase.mimeTypeForFile(filePath);
+
+    QString type = mimeType.isValid()
+        ? mimeType.name()
+        : "application/octet-stream";
+
+    bool sent = controller->sendPrivateAttachment(
+        targetUser.toStdString(),
+        filePath,
+        type
+    );
+
+    if (sent) {
+        ui->messageInput->setPlaceholderText("Attachment sent");
+        refreshMessages();
+    }
+
+    return sent;
+}
+
 void PrivateWindow::playVoiceFile(const QString& filePath) {
     QFileInfo info(filePath);
 
@@ -446,6 +516,17 @@ void PrivateWindow::playVoiceFile(const QString& filePath) {
     voicePlayer->play();
 
     ui->messageInput->setPlaceholderText("Playing voice message...");
+}
+
+void PrivateWindow::openAttachmentFile(const QString& filePath) {
+    QFileInfo info(filePath);
+
+    if (!info.exists()) {
+        ui->messageInput->setPlaceholderText("Attachment file not found");
+        return;
+    }
+
+    QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
 }
 
 void PrivateWindow::refreshMessages() {
