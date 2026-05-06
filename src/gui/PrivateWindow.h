@@ -13,69 +13,87 @@ class QAudioInput;
 class QMediaRecorder;
 class QMediaPlayer;
 class QAudioOutput;
+
 class ChatController;
 
 namespace Ui {
 class PrivateWindow;
 }
 
-class PrivateWindow : public QDialog {
+class PrivateWindow : public QDialog
+{
     Q_OBJECT
-
-private:
-    Ui::PrivateWindow* ui;
-    std::shared_ptr<ChatController> controller;
-    QString targetUser;
-
-    QTimer* refreshTimer;
-    QTimer* recordingTimer;
-
-    QLabel* recordingLabel;
-    QPushButton* voiceButton;
-    QPushButton* deleteVoiceButton;
-    QPushButton* attachmentButton;
-
-    QMediaCaptureSession* audioSession;
-    QAudioInput* audioInput;
-    QMediaRecorder* audioRecorder;
-    QMediaPlayer* voicePlayer;
-    QAudioOutput* voiceOutput;
-
-    bool isRecording;
-    bool hasPendingVoice;
-    QString pendingVoiceFilePath;
-    int recordingSeconds;
-
-    QString lastRenderedHtml;
 
 public:
     explicit PrivateWindow(std::shared_ptr<ChatController> controller,
                            const QString& targetUser,
                            QWidget* parent = nullptr);
+
     ~PrivateWindow();
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
-    void setupUiStyle();
+    Ui::PrivateWindow* ui;
+
+    std::shared_ptr<ChatController> controller;
+
+    QString targetUser;
+
+    QTimer* refreshTimer;
+    QTimer* recordingTimer;
+
+    QLabel* recordingLabel;
+
+    QPushButton* voiceButton;
+    QPushButton* deleteVoiceButton;
+    QPushButton* attachmentButton;
+    QPushButton* cameraButton;
+
+    QMediaCaptureSession* audioSession;
+    QAudioInput* audioInput;
+    QMediaRecorder* audioRecorder;
+
+    QMediaPlayer* voicePlayer;
+    QAudioOutput* voiceOutput;
+
+    bool isRecording;
+    bool hasPendingVoice;
+
+    QString pendingVoiceFilePath;
+
+    int recordingSeconds;
+
+    QString lastRenderedHtml;
+
+private:
+    void rebuildLayout();
+
     void setupVoiceRecorder();
     void setupVoicePlayer();
 
     void onSendClicked();
+
     void onVoiceClicked();
     void onDeleteVoiceClicked();
+
     void onAttachmentClicked();
+    void onCameraClicked();
 
     void startVoiceRecording();
     void stopVoiceRecording();
+
     void updateRecordingTimer();
+
     void preparePendingVoice();
     void clearPendingVoice();
 
-    bool sendTextMessage(const QString& text);
     bool sendPendingVoiceMessage();
     bool sendAttachmentFile(const QString& filePath);
+
+    QString createCameraOutputPath(const QString& extension,
+                                   const QString& folderName) const;
 
     void playVoiceFile(const QString& filePath);
     void openAttachmentFile(const QString& filePath);

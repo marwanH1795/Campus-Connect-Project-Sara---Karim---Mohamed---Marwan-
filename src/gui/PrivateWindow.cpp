@@ -1,22 +1,38 @@
 #include "PrivateWindow.h"
 #include "MessageRenderer.h"
 #include "../logic/ChatController.h"
+#include "../logic/Message.h"
 #include "ui_PrivateWindow.h"
 
 #include <QTimer>
+#include <QScrollBar>
+#include <QTime>
 #include <QLabel>
 #include <QPushButton>
-#include <QScrollBar>
+#include <QFrame>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QFileDialog>
 #include <QMimeDatabase>
 #include <QMimeType>
 #include <QDesktopServices>
+#include <QDialog>
+#include <QMessageBox>
+#include <QApplication>
+
+#include <QCamera>
+#include <QCameraDevice>
+#include <QMediaDevices>
+#include <QVideoWidget>
+#include <QImageCapture>
+
 #include <QMediaCaptureSession>
 #include <QAudioInput>
 #include <QMediaRecorder>
 #include <QMediaFormat>
 #include <QMediaPlayer>
 #include <QAudioOutput>
+
 #include <QStandardPaths>
 #include <QDir>
 #include <QDateTime>
@@ -28,9 +44,10 @@
 #include <QTextCharFormat>
 #include <QByteArray>
 
-PrivateWindow::PrivateWindow(std::shared_ptr<ChatController> controller,
-                             const QString& targetUser,
-                             QWidget* parent)
+PrivateWindow::PrivateWindow(
+    std::shared_ptr<ChatController> controller,
+    const QString& targetUser,
+    QWidget* parent)
     : QDialog(parent),
       ui(new Ui::PrivateWindow),
       controller(controller),
@@ -41,6 +58,7 @@ PrivateWindow::PrivateWindow(std::shared_ptr<ChatController> controller,
       voiceButton(nullptr),
       deleteVoiceButton(nullptr),
       attachmentButton(nullptr),
+      cameraButton(nullptr),
       audioSession(nullptr),
       audioInput(nullptr),
       audioRecorder(nullptr),
@@ -51,9 +69,10 @@ PrivateWindow::PrivateWindow(std::shared_ptr<ChatController> controller,
       recordingSeconds(0)
 {
     ui->setupUi(this);
-    setWindowTitle("Private Chat - " + this->targetUser);
 
-    setupUiStyle();
+    setWindowTitle("Private Chat - " + targetUser);
+
+    rebuildLayout();
     setupVoiceRecorder();
     setupVoicePlayer();
 
@@ -61,43 +80,40 @@ PrivateWindow::PrivateWindow(std::shared_ptr<ChatController> controller,
     ui->privateDisplay->viewport()->installEventFilter(this);
 
     connect(ui->sendButton, &QPushButton::clicked,
-            this, [this]() { onSendClicked(); });
-
-    connect(voiceButton, &QPushButton::clicked,
-            this, [this]() { onVoiceClicked(); });
-
-    connect(deleteVoiceButton, &QPushButton::clicked,
-            this, [this]() { onDeleteVoiceClicked(); });
-
-    connect(attachmentButton, &QPushButton::clicked,
-            this, [this]() { onAttachmentClicked(); });
+            this, &PrivateWindow::onSendClicked);
 
     connect(ui->messageInput, &QLineEdit::returnPressed,
-            this, [this]() { onSendClicked(); });
+            this, &PrivateWindow::onSendClicked);
 
-    connect(ui->messageInput, &QLineEdit::textChanged,
-            this, [this](const QString& text) {
-                this->controller->sendPrivateTypingStatus(
-                    this->targetUser.toStdString(),
-                    !text.trimmed().isEmpty()
-                );
-            });
+    connect(voiceButton, &QPushButton::clicked,
+            this, &PrivateWindow::onVoiceClicked);
+
+    connect(deleteVoiceButton, &QPushButton::clicked,
+            this, &PrivateWindow::onDeleteVoiceClicked);
+
+    connect(attachmentButton, &QPushButton::clicked,
+            this, &PrivateWindow::onAttachmentClicked);
+
+    connect(cameraButton, &QPushButton::clicked,
+            this, &PrivateWindow::onCameraClicked);
 
     connect(recordingTimer, &QTimer::timeout,
-            this, [this]() { updateRecordingTimer(); });
+            this, &PrivateWindow::updateRecordingTimer);
 
     connect(refreshTimer, &QTimer::timeout,
-            this, [this]() { refreshMessages(); });
+            this, &PrivateWindow::refreshMessages);
 
     refreshMessages();
     refreshTimer->start(250);
 }
 
-PrivateWindow::~PrivateWindow() {
+PrivateWindow::~PrivateWindow()
+{
     delete ui;
 }
 
-bool PrivateWindow::eventFilter(QObject* watched, QEvent* event) {
+bool PrivateWindow::eventFilter(QObject* watched, QEvent* event)
+{
     if (watched == ui->privateDisplay->viewport() &&
         event->type() == QEvent::MouseButtonRelease) {
 
@@ -107,7 +123,9 @@ bool PrivateWindow::eventFilter(QObject* watched, QEvent* event) {
             QString link = ui->privateDisplay->anchorAt(mouseEvent->pos());
 
             if (link.isEmpty()) {
-                QTextCursor cursor = ui->privateDisplay->cursorForPosition(mouseEvent->pos());
+                QTextCursor cursor =
+                    ui->privateDisplay->cursorForPosition(mouseEvent->pos());
+
                 QTextCharFormat format = cursor.charFormat();
 
                 if (format.isAnchor()) {
@@ -116,20 +134,26 @@ bool PrivateWindow::eventFilter(QObject* watched, QEvent* event) {
             }
 
             if (link.startsWith("voice:")) {
-                QString encodedPath = link.mid(QString("voice:").length());
-                QString filePath = QString::fromUtf8(
-                    QByteArray::fromBase64(encodedPath.toLatin1())
-                );
+                QString encodedPath =
+                    link.mid(QString("voice:").length());
+
+                QString filePath =
+                    QString::fromUtf8(
+                        QByteArray::fromBase64(encodedPath.toLatin1())
+                    );
 
                 playVoiceFile(filePath);
                 return true;
             }
 
             if (link.startsWith("open:")) {
-                QString encodedPath = link.mid(QString("open:").length());
-                QString filePath = QString::fromUtf8(
-                    QByteArray::fromBase64(encodedPath.toLatin1())
-                );
+                QString encodedPath =
+                    link.mid(QString("open:").length());
+
+                QString filePath =
+                    QString::fromUtf8(
+                        QByteArray::fromBase64(encodedPath.toLatin1())
+                    );
 
                 openAttachmentFile(filePath);
                 return true;
@@ -140,35 +164,86 @@ bool PrivateWindow::eventFilter(QObject* watched, QEvent* event) {
     return QDialog::eventFilter(watched, event);
 }
 
-void PrivateWindow::setupUiStyle() {
+void PrivateWindow::rebuildLayout()
+{
+    setMinimumSize(900, 600);
+
+    setStyleSheet(
+        "QWidget {"
+        "background-color:#1e1f2e;"
+        "color:#e0e0f0;"
+        "font-family:'Segoe UI';"
+        "}"
+    );
+
+    QVBoxLayout* root = new QVBoxLayout(this);
+
+    root->setContentsMargins(20, 20, 20, 20);
+    root->setSpacing(14);
+
+    QLabel* title =
+        new QLabel("Private Chat with " + targetUser);
+
+    title->setStyleSheet(
+        "font-size:18px;"
+        "font-weight:bold;"
+        "color:#7c6af7;"
+    );
+
+    ui->privateDisplay->setReadOnly(true);
+
+    ui->privateDisplay->setStyleSheet(
+        "QTextEdit {"
+        "background-color:#16172a;"
+        "border:2px solid #3a3b55;"
+        "border-radius:12px;"
+        "padding:10px;"
+        "font-size:13px;"
+        "}"
+    );
+
+    QFrame* inputBar = new QFrame(this);
+
+    inputBar->setMinimumHeight(66);
+
+    inputBar->setStyleSheet(
+        "QFrame {"
+        "background-color:#151525;"
+        "border:2px solid #3a3b55;"
+        "border-radius:22px;"
+        "}"
+    );
+
+    QHBoxLayout* inputLayout =
+        new QHBoxLayout(inputBar);
+
+    inputLayout->setContentsMargins(12, 8, 12, 8);
+    inputLayout->setSpacing(10);
+
+    ui->messageInput->setMinimumHeight(44);
+
+    ui->messageInput->setStyleSheet(
+        "QLineEdit {"
+        "background-color:#2a2b3d;"
+        "border:2px solid #4a4b6a;"
+        "border-radius:22px;"
+        "padding:0px 16px;"
+        "font-size:13px;"
+        "}"
+    );
+
     recordingLabel = new QLabel("00:00", this);
+
     recordingLabel->hide();
 
-    voiceButton = new QPushButton("🎤", this);
-    voiceButton->setMinimumSize(46, 46);
-    voiceButton->setMaximumSize(46, 46);
-    voiceButton->setToolTip("Record voice message");
-
-    deleteVoiceButton = new QPushButton("🗑", this);
-    deleteVoiceButton->setMinimumSize(46, 46);
-    deleteVoiceButton->setMaximumSize(46, 46);
-    deleteVoiceButton->setToolTip("Delete recorded voice");
-    deleteVoiceButton->hide();
-
-    attachmentButton = new QPushButton("📎", this);
-    attachmentButton->setMinimumSize(46, 46);
-    attachmentButton->setMaximumSize(46, 46);
-    attachmentButton->setToolTip("Send image, video, or file");
-
-    ui->inputLayout->insertWidget(1, recordingLabel);
-    ui->inputLayout->insertWidget(2, voiceButton);
-    ui->inputLayout->insertWidget(3, deleteVoiceButton);
-    ui->inputLayout->insertWidget(4, attachmentButton);
+    recordingLabel->setStyleSheet(
+        "color:#ffcc66;"
+        "font-weight:bold;"
+    );
 
     QString roundButtonStyle =
         "QPushButton {"
         "background-color:#2a2b3d;"
-        "color:#ffffff;"
         "border:2px solid #4a4b6a;"
         "border-radius:23px;"
         "font-size:18px;"
@@ -176,37 +251,29 @@ void PrivateWindow::setupUiStyle() {
         "QPushButton:hover {"
         "background-color:#3a3b55;"
         "border:2px solid #7c6af7;"
-        "}"
-        "QPushButton:pressed {"
-        "background-color:#7c6af7;"
         "}";
 
-    voiceButton->setStyleSheet(roundButtonStyle);
-    deleteVoiceButton->setStyleSheet(roundButtonStyle);
-    attachmentButton->setStyleSheet(roundButtonStyle);
+    voiceButton = new QPushButton("🎤", this);
+    deleteVoiceButton = new QPushButton("🗑", this);
+    attachmentButton = new QPushButton("📎", this);
+    cameraButton = new QPushButton("📷", this);
 
-    recordingLabel->setStyleSheet(
-        "QLabel {"
-        "color:#ffcc66;"
-        "font-weight:bold;"
-        "font-size:13px;"
-        "padding:0 8px;"
-        "}"
-    );
+    QList<QPushButton*> buttons = {
+        voiceButton,
+        deleteVoiceButton,
+        attachmentButton,
+        cameraButton
+    };
 
-    ui->messageInput->setStyleSheet(
-        "QLineEdit {"
-        "background-color:#2a2b3d;"
-        "color:#e0e0f0;"
-        "border:2px solid #4a4b6a;"
-        "border-radius:22px;"
-        "padding:0px 16px;"
-        "font-size:13px;"
-        "}"
-        "QLineEdit:focus {"
-        "border:2px solid #7c6af7;"
-        "}"
-    );
+    for (QPushButton* button : buttons) {
+        button->setMinimumSize(46, 46);
+        button->setMaximumSize(46, 46);
+        button->setStyleSheet(roundButtonStyle);
+    }
+
+    deleteVoiceButton->hide();
+
+    ui->sendButton->setMinimumSize(105, 46);
 
     ui->sendButton->setStyleSheet(
         "QPushButton {"
@@ -214,20 +281,29 @@ void PrivateWindow::setupUiStyle() {
         "color:#101426;"
         "border:none;"
         "border-radius:23px;"
-        "font-size:13px;"
         "font-weight:bold;"
         "}"
-        "QPushButton:hover {"
-        "background-color:#55e0a3;"
-        "}"
-        "QPushButton:pressed {"
-        "background-color:#28a570;"
-        "}"
     );
+
+    inputLayout->addWidget(ui->messageInput, 1);
+    inputLayout->addWidget(recordingLabel);
+    inputLayout->addWidget(voiceButton);
+    inputLayout->addWidget(deleteVoiceButton);
+    inputLayout->addWidget(attachmentButton);
+    inputLayout->addWidget(cameraButton);
+    inputLayout->addWidget(ui->sendButton);
+
+    root->addWidget(title);
+    root->addWidget(ui->privateDisplay, 1);
+    root->addWidget(inputBar);
+
+    setLayout(root);
 }
 
-void PrivateWindow::setupVoiceRecorder() {
+void PrivateWindow::setupVoiceRecorder()
+{
     audioSession = new QMediaCaptureSession(this);
+
     audioInput = new QAudioInput(this);
     audioRecorder = new QMediaRecorder(this);
 
@@ -235,75 +311,73 @@ void PrivateWindow::setupVoiceRecorder() {
     audioSession->setRecorder(audioRecorder);
 
     QMediaFormat format;
+
     format.setFileFormat(QMediaFormat::Wave);
     format.setAudioCodec(QMediaFormat::AudioCodec::Wave);
+
     audioRecorder->setMediaFormat(format);
-    audioRecorder->setQuality(QMediaRecorder::NormalQuality);
 
-    connect(audioRecorder, &QMediaRecorder::recorderStateChanged,
-            this, [this](QMediaRecorder::RecorderState state) {
-                if (state == QMediaRecorder::StoppedState) {
-                    preparePendingVoice();
-                }
-            });
+    connect(audioRecorder,
+            &QMediaRecorder::recorderStateChanged,
+            this,
+            [this](QMediaRecorder::RecorderState state) {
 
-    connect(audioRecorder, &QMediaRecorder::errorOccurred,
-            this, [this](QMediaRecorder::Error, const QString& errorString) {
-                isRecording = false;
-                hasPendingVoice = false;
-                recordingTimer->stop();
-
-                recordingLabel->hide();
-                deleteVoiceButton->hide();
-                voiceButton->setText("🎤");
-
-                ui->messageInput->setPlaceholderText("Voice failed: " + errorString);
-            });
+        if (state == QMediaRecorder::StoppedState) {
+            preparePendingVoice();
+        }
+    });
 }
 
-void PrivateWindow::setupVoicePlayer() {
+void PrivateWindow::setupVoicePlayer()
+{
     voicePlayer = new QMediaPlayer(this);
+
     voiceOutput = new QAudioOutput(this);
 
     voicePlayer->setAudioOutput(voiceOutput);
-    voiceOutput->setVolume(1.0);
-
-    connect(voicePlayer, &QMediaPlayer::errorOccurred,
-            this, [this](QMediaPlayer::Error, const QString& errorString) {
-                ui->messageInput->setPlaceholderText("Playback failed: " + errorString);
-            });
 }
 
-void PrivateWindow::onSendClicked() {
+void PrivateWindow::onSendClicked()
+{
     if (hasPendingVoice) {
+
         if (sendPendingVoiceMessage()) {
+
             pendingVoiceFilePath.clear();
+
             hasPendingVoice = false;
+
             recordingSeconds = 0;
 
-            recordingLabel->setText("00:00");
             recordingLabel->hide();
+
             deleteVoiceButton->hide();
+
             voiceButton->setText("🎤");
-            ui->messageInput->setPlaceholderText("Type a message...");
         }
 
         return;
     }
 
-    QString text = ui->messageInput->text().trimmed();
+    QString text =
+        ui->messageInput->text().trimmed();
 
     if (text.isEmpty()) {
         return;
     }
 
-    if (sendTextMessage(text)) {
-        ui->messageInput->clear();
-        ui->messageInput->setFocus();
-    }
+    controller->sendPrivateMessage(
+        targetUser.toStdString(),
+        text.toStdString()
+    );
+
+    ui->messageInput->clear();
+
+    refreshMessages();
 }
 
-void PrivateWindow::onVoiceClicked() {
+void PrivateWindow::onVoiceClicked()
+{
     if (isRecording) {
         stopVoiceRecording();
     } else {
@@ -311,31 +385,298 @@ void PrivateWindow::onVoiceClicked() {
     }
 }
 
-void PrivateWindow::onDeleteVoiceClicked() {
+void PrivateWindow::onDeleteVoiceClicked()
+{
     clearPendingVoice();
 }
 
-void PrivateWindow::onAttachmentClicked() {
-    QString filePath = QFileDialog::getOpenFileName(
-        this,
-        "Choose a file to send privately",
-        QDir::homePath(),
-        "All Files (*.*)"
-    );
+void PrivateWindow::onAttachmentClicked()
+{
+    QString filePath =
+        QFileDialog::getOpenFileName(
+            this,
+            "Choose File",
+            QDir::homePath(),
+            "All Files (*.*)"
+        );
 
     if (filePath.isEmpty()) {
         return;
     }
 
-    if (!sendAttachmentFile(filePath)) {
-        ui->messageInput->setPlaceholderText("Failed to send attachment");
-    }
+    sendAttachmentFile(filePath);
 }
 
-void PrivateWindow::startVoiceRecording() {
+void PrivateWindow::onCameraClicked()
+{
+    QCameraDevice cameraDevice =
+        QMediaDevices::defaultVideoInput();
+
+    if (cameraDevice.isNull()) {
+
+        QMessageBox::warning(
+            this,
+            "Camera",
+            "No camera device found."
+        );
+
+        return;
+    }
+
+    QDialog cameraDialog(this);
+
+    cameraDialog.setWindowTitle("Camera Capture");
+
+    cameraDialog.resize(900, 700);
+
+    QVBoxLayout* root =
+        new QVBoxLayout(&cameraDialog);
+
+    QLabel* title =
+        new QLabel("Camera Preview");
+
+    title->setStyleSheet(
+        "font-size:24px;"
+        "font-weight:bold;"
+        "color:#7c6af7;"
+    );
+
+    root->addWidget(title);
+
+    QVideoWidget* videoWidget =
+        new QVideoWidget();
+
+    videoWidget->setMinimumHeight(500);
+
+    root->addWidget(videoWidget);
+
+    QLabel* timerLabel =
+        new QLabel("Video time: 00:00");
+
+    timerLabel->hide();
+
+    QLabel* statusLabel =
+        new QLabel("Ready.");
+
+    root->addWidget(timerLabel);
+    root->addWidget(statusLabel);
+
+    QHBoxLayout* buttons =
+        new QHBoxLayout();
+
+    QPushButton* takePhotoButton =
+        new QPushButton("📸 Take Photo");
+
+    QPushButton* startVideoButton =
+        new QPushButton("⏺ Start Video");
+
+    QPushButton* stopVideoButton =
+        new QPushButton("⏹ Stop Video");
+
+    QPushButton* sendButton =
+        new QPushButton("Send ✅");
+
+    QPushButton* deleteButton =
+        new QPushButton("Delete 🗑");
+
+    QPushButton* closeButton =
+        new QPushButton("Close");
+
+    buttons->addWidget(takePhotoButton);
+    buttons->addWidget(startVideoButton);
+    buttons->addWidget(stopVideoButton);
+    buttons->addWidget(sendButton);
+    buttons->addWidget(deleteButton);
+    buttons->addWidget(closeButton);
+
+    root->addLayout(buttons);
+
+    QMediaCaptureSession captureSession;
+
+    QCamera camera(cameraDevice);
+
+    QImageCapture imageCapture;
+
+    QAudioInput videoAudioInput;
+
+    QMediaRecorder videoRecorder;
+
+    captureSession.setCamera(&camera);
+    captureSession.setVideoOutput(videoWidget);
+    captureSession.setImageCapture(&imageCapture);
+    captureSession.setAudioInput(&videoAudioInput);
+    captureSession.setRecorder(&videoRecorder);
+
+    QMediaFormat videoFormat;
+
+    videoFormat.setFileFormat(QMediaFormat::MPEG4);
+
+    videoRecorder.setMediaFormat(videoFormat);
+
+    QString capturedFilePath;
+    QString pendingVideoFilePath;
+
+    bool isVideoRecording = false;
+
+    int videoSeconds = 0;
+
+    QTimer videoTimer(&cameraDialog);
+
+    auto updateTimer = [&]() {
+
+        int minutes = videoSeconds / 60;
+        int seconds = videoSeconds % 60;
+
+        timerLabel->setText(
+            QString("Video time: %1:%2")
+                .arg(minutes, 2, 10, QChar('0'))
+                .arg(seconds, 2, 10, QChar('0'))
+        );
+    };
+
+    connect(&videoTimer,
+            &QTimer::timeout,
+            &cameraDialog,
+            [&]() {
+
+        videoSeconds++;
+
+        updateTimer();
+    });
+
+    connect(takePhotoButton,
+            &QPushButton::clicked,
+            &cameraDialog,
+            [&]() {
+
+        QString output =
+            createCameraOutputPath(
+                "jpg",
+                "PrivatePhotos"
+            );
+
+        QApplication::beep();
+
+        imageCapture.captureToFile(output);
+
+        capturedFilePath = output;
+
+        sendButton->setEnabled(true);
+
+        statusLabel->setText("Photo captured.");
+    });
+
+    connect(startVideoButton,
+            &QPushButton::clicked,
+            &cameraDialog,
+            [&]() {
+
+        pendingVideoFilePath =
+            createCameraOutputPath(
+                "mp4",
+                "PrivateVideos"
+            );
+
+        videoRecorder.setOutputLocation(
+            QUrl::fromLocalFile(
+                pendingVideoFilePath
+            )
+        );
+
+        QApplication::beep();
+
+        isVideoRecording = true;
+
+        videoSeconds = 0;
+
+        updateTimer();
+
+        timerLabel->show();
+
+        videoTimer.start(1000);
+
+        videoRecorder.record();
+
+        statusLabel->setText("Recording video...");
+    });
+
+    connect(stopVideoButton,
+            &QPushButton::clicked,
+            &cameraDialog,
+            [&]() {
+
+        QApplication::beep();
+
+        videoRecorder.stop();
+
+        videoTimer.stop();
+
+        timerLabel->hide();
+
+        capturedFilePath =
+            pendingVideoFilePath;
+
+        isVideoRecording = false;
+
+        sendButton->setEnabled(true);
+
+        statusLabel->setText("Video recorded.");
+    });
+
+    connect(sendButton,
+            &QPushButton::clicked,
+            &cameraDialog,
+            [&]() {
+
+        if (capturedFilePath.isEmpty()) {
+            return;
+        }
+
+        sendAttachmentFile(capturedFilePath);
+
+        cameraDialog.accept();
+    });
+
+    connect(deleteButton,
+            &QPushButton::clicked,
+            &cameraDialog,
+            [&]() {
+
+        if (!capturedFilePath.isEmpty()) {
+            QFile::remove(capturedFilePath);
+        }
+
+        capturedFilePath.clear();
+
+        statusLabel->setText("Deleted.");
+    });
+
+    connect(closeButton,
+            &QPushButton::clicked,
+            &cameraDialog,
+            &QDialog::reject);
+
+    camera.start();
+
+    cameraDialog.exec();
+
+    if (isVideoRecording) {
+        videoRecorder.stop();
+    }
+
+    videoTimer.stop();
+
+    camera.stop();
+}
+
+void PrivateWindow::startVoiceRecording()
+{
     clearPendingVoice();
 
-    QString baseDir = QStandardPaths::writableLocation(QStandardPaths::MusicLocation);
+    QString baseDir =
+        QStandardPaths::writableLocation(
+            QStandardPaths::MusicLocation
+        );
 
     if (baseDir.isEmpty()) {
         baseDir = QDir::homePath();
@@ -349,42 +690,56 @@ void PrivateWindow::startVoiceRecording() {
 
     QString fileName =
         "private_voice_" +
-        QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss") +
+        QDateTime::currentDateTime().toString(
+            "yyyyMMdd_hhmmss"
+        ) +
         ".wav";
 
-    pendingVoiceFilePath = dir.absoluteFilePath(fileName);
+    pendingVoiceFilePath =
+        dir.absoluteFilePath(fileName);
 
-    audioRecorder->setOutputLocation(QUrl::fromLocalFile(pendingVoiceFilePath));
+    audioRecorder->setOutputLocation(
+        QUrl::fromLocalFile(
+            pendingVoiceFilePath
+        )
+    );
+
     audioRecorder->record();
 
     isRecording = true;
+
     hasPendingVoice = false;
+
     recordingSeconds = 0;
 
     recordingLabel->setText("00:00");
+
     recordingLabel->show();
+
     deleteVoiceButton->hide();
 
     recordingTimer->start(1000);
 
     voiceButton->setText("⏹");
-    ui->messageInput->setPlaceholderText("Recording voice message...");
 }
 
-void PrivateWindow::stopVoiceRecording() {
+void PrivateWindow::stopVoiceRecording()
+{
     if (!isRecording) {
         return;
     }
 
     isRecording = false;
+
     recordingTimer->stop();
+
     audioRecorder->stop();
 
     voiceButton->setText("🎤");
-    ui->messageInput->setPlaceholderText("Voice ready. Click Send or Delete.");
 }
 
-void PrivateWindow::updateRecordingTimer() {
+void PrivateWindow::updateRecordingTimer()
+{
     recordingSeconds++;
 
     int minutes = recordingSeconds / 60;
@@ -397,28 +752,27 @@ void PrivateWindow::updateRecordingTimer() {
     );
 }
 
-void PrivateWindow::preparePendingVoice() {
-    if (pendingVoiceFilePath.isEmpty()) {
-        return;
-    }
-
+void PrivateWindow::preparePendingVoice()
+{
     QFileInfo info(pendingVoiceFilePath);
 
     if (!info.exists() || info.size() == 0) {
-        ui->messageInput->setPlaceholderText("Voice file was not recorded.");
         return;
     }
 
     hasPendingVoice = true;
+
     deleteVoiceButton->show();
-    recordingLabel->show();
-    ui->messageInput->setPlaceholderText("Voice ready. Click Send or Delete.");
 }
 
-void PrivateWindow::clearPendingVoice() {
+void PrivateWindow::clearPendingVoice()
+{
     if (isRecording) {
+
         audioRecorder->stop();
+
         recordingTimer->stop();
+
         isRecording = false;
     }
 
@@ -427,127 +781,179 @@ void PrivateWindow::clearPendingVoice() {
     }
 
     pendingVoiceFilePath.clear();
+
     hasPendingVoice = false;
+
     recordingSeconds = 0;
 
-    recordingLabel->setText("00:00");
     recordingLabel->hide();
+
     deleteVoiceButton->hide();
+
     voiceButton->setText("🎤");
-    ui->messageInput->setPlaceholderText("Type a message...");
 }
 
-bool PrivateWindow::sendTextMessage(const QString& text) {
-    bool sent = controller->sendPrivateMessage(
-        targetUser.toStdString(),
-        text.toStdString()
-    );
-
-    if (sent) {
-        controller->sendPrivateTypingStatus(targetUser.toStdString(), false);
-        refreshMessages();
-    }
-
-    return sent;
-}
-
-bool PrivateWindow::sendPendingVoiceMessage() {
+bool PrivateWindow::sendPendingVoiceMessage()
+{
     QFileInfo info(pendingVoiceFilePath);
 
-    if (!info.exists() || info.size() == 0) {
-        ui->messageInput->setPlaceholderText("Voice file not found or empty");
+    if (!info.exists() ||
+        info.size() == 0) {
+
         return false;
     }
 
-    bool sent = controller->sendPrivateAttachment(
-        targetUser.toStdString(),
-        pendingVoiceFilePath,
-        "audio/wav"
-    );
+    bool sent =
+        controller->sendPrivateAttachment(
+            targetUser.toStdString(),
+            pendingVoiceFilePath,
+            "audio/wav"
+        );
 
     if (sent) {
-        controller->sendPrivateTypingStatus(targetUser.toStdString(), false);
         refreshMessages();
-    } else {
-        ui->messageInput->setPlaceholderText("Failed to send voice message");
     }
 
     return sent;
 }
 
-bool PrivateWindow::sendAttachmentFile(const QString& filePath) {
+bool PrivateWindow::sendAttachmentFile(
+    const QString& filePath)
+{
     QFileInfo info(filePath);
 
-    if (!info.exists() || info.size() <= 0) {
+    if (!info.exists() ||
+        info.size() <= 0) {
+
         return false;
     }
 
-    QMimeDatabase mimeDatabase;
-    QMimeType mimeType = mimeDatabase.mimeTypeForFile(filePath);
+    QMimeDatabase database;
 
-    QString type = mimeType.isValid()
+    QMimeType mimeType =
+        database.mimeTypeForFile(filePath);
+
+    QString type =
+        mimeType.isValid()
         ? mimeType.name()
         : "application/octet-stream";
 
-    bool sent = controller->sendPrivateAttachment(
-        targetUser.toStdString(),
-        filePath,
-        type
-    );
+    bool sent =
+        controller->sendPrivateAttachment(
+            targetUser.toStdString(),
+            filePath,
+            type
+        );
 
     if (sent) {
-        ui->messageInput->setPlaceholderText("Attachment sent");
         refreshMessages();
     }
 
     return sent;
 }
 
-void PrivateWindow::playVoiceFile(const QString& filePath) {
+QString PrivateWindow::createCameraOutputPath(
+    const QString& extension,
+    const QString& folderName) const
+{
+    QString baseDir =
+        QStandardPaths::writableLocation(
+            QStandardPaths::PicturesLocation
+        );
+
+    if (baseDir.isEmpty()) {
+        baseDir = QDir::homePath();
+    }
+
+    QDir dir(
+        baseDir +
+        "/CampusConnect/" +
+        folderName
+    );
+
+    if (!dir.exists()) {
+        dir.mkpath(".");
+    }
+
+    QString fileName =
+        "camera_" +
+        QDateTime::currentDateTime().toString(
+            "yyyyMMdd_hhmmss_zzz"
+        ) +
+        "." +
+        extension;
+
+    return dir.absoluteFilePath(fileName);
+}
+
+void PrivateWindow::playVoiceFile(
+    const QString& filePath)
+{
     QFileInfo info(filePath);
 
     if (!info.exists()) {
-        ui->messageInput->setPlaceholderText("Voice file not found");
         return;
     }
 
     voicePlayer->stop();
-    voicePlayer->setSource(QUrl::fromLocalFile(filePath));
-    voicePlayer->play();
 
-    ui->messageInput->setPlaceholderText("Playing voice message...");
+    voicePlayer->setSource(
+        QUrl::fromLocalFile(filePath)
+    );
+
+    voicePlayer->play();
 }
 
-void PrivateWindow::openAttachmentFile(const QString& filePath) {
+void PrivateWindow::openAttachmentFile(
+    const QString& filePath)
+{
     QFileInfo info(filePath);
 
     if (!info.exists()) {
-        ui->messageInput->setPlaceholderText("Attachment file not found");
         return;
     }
 
-    QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
+    QDesktopServices::openUrl(
+        QUrl::fromLocalFile(filePath)
+    );
 }
 
-void PrivateWindow::refreshMessages() {
-    auto messages = controller->getState()
-                        .getPrivateMessagesWithUser(targetUser.toStdString());
+void PrivateWindow::refreshMessages()
+{
+    auto messages =
+        controller->getState()
+            .getPrivateMessagesWithUser(
+                targetUser.toStdString()
+            );
 
     QString me =
-        QString::fromStdString(controller->getCurrentUsername()).trimmed().toLower();
+        QString::fromStdString(
+            controller->getCurrentUsername()
+        ).trimmed().toLower();
 
-    QScrollBar* scrollBar = ui->privateDisplay->verticalScrollBar();
-    bool shouldAutoScroll = scrollBar->value() >= scrollBar->maximum() - 25;
+    QScrollBar* scrollBar =
+        ui->privateDisplay->verticalScrollBar();
+
+    bool autoScroll =
+        scrollBar->value() >=
+        scrollBar->maximum() - 25;
 
     QString html;
-    html += "<html><body style='background:#0f0f1a; color:white; font-family:Segoe UI, Arial; margin:16px;'>";
+
+    html +=
+        "<html><body style='"
+        "background:#0f0f1a;"
+        "color:white;"
+        "font-family:Segoe UI, Arial;"
+        "margin:16px;'>";
 
     for (const auto& msg : messages) {
-        html += MessageRenderer::renderMessage(msg, me);
-    }
 
-    if (controller->getState().isPrivateUserTyping(targetUser.toStdString())) {
-        html += MessageRenderer::renderTyping(targetUser + " is typing...");
+        html +=
+            MessageRenderer::renderMessage(
+                msg,
+                me
+            );
     }
 
     html += "</body></html>";
@@ -557,11 +963,17 @@ void PrivateWindow::refreshMessages() {
     }
 
     lastRenderedHtml = html;
+
     ui->privateDisplay->setHtml(html);
 
-    if (shouldAutoScroll) {
-        ui->privateDisplay->verticalScrollBar()->setValue(
-            ui->privateDisplay->verticalScrollBar()->maximum()
-        );
+    if (autoScroll) {
+
+        ui->privateDisplay
+            ->verticalScrollBar()
+            ->setValue(
+                ui->privateDisplay
+                    ->verticalScrollBar()
+                    ->maximum()
+            );
     }
 }

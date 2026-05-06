@@ -22,6 +22,15 @@
 #include <QMimeDatabase>
 #include <QMimeType>
 #include <QDesktopServices>
+#include <QDialog>
+#include <QMessageBox>
+#include <QApplication>
+
+#include <QCamera>
+#include <QCameraDevice>
+#include <QMediaDevices>
+#include <QVideoWidget>
+#include <QImageCapture>
 #include <QMediaCaptureSession>
 #include <QAudioInput>
 #include <QMediaRecorder>
@@ -50,6 +59,7 @@ GroupWindow::GroupWindow(std::shared_ptr<ChatController> controller, QWidget* pa
       voiceButton(nullptr),
       deleteVoiceButton(nullptr),
       attachmentButton(nullptr),
+      cameraButton(nullptr),
       audioSession(nullptr),
       audioInput(nullptr),
       audioRecorder(nullptr),
@@ -85,6 +95,9 @@ GroupWindow::GroupWindow(std::shared_ptr<ChatController> controller, QWidget* pa
 
     connect(attachmentButton, &QPushButton::clicked,
             this, [this]() { onAttachmentClicked(); });
+
+    connect(cameraButton, &QPushButton::clicked,
+            this, [this]() { onCameraClicked(); });
 
     connect(ui->groupNameInput, &QLineEdit::returnPressed,
             this, [this]() { onJoinClicked(); });
@@ -323,6 +336,11 @@ void GroupWindow::rebuildLayout() {
     attachmentButton->setMaximumSize(46, 46);
     attachmentButton->setToolTip("Send image, video, or file");
 
+    cameraButton = new QPushButton("📷", this);
+    cameraButton->setMinimumSize(46, 46);
+    cameraButton->setMaximumSize(46, 46);
+    cameraButton->setToolTip("Take photo or record video");
+
     QString roundButtonStyle =
         "QPushButton {"
         "background-color:#2a2b3d;"
@@ -340,6 +358,7 @@ void GroupWindow::rebuildLayout() {
     voiceButton->setStyleSheet(roundButtonStyle);
     deleteVoiceButton->setStyleSheet(roundButtonStyle);
     attachmentButton->setStyleSheet(roundButtonStyle);
+    cameraButton->setStyleSheet(roundButtonStyle);
 
     ui->groupMessageInput->setStyleSheet(
         "QLineEdit {"
@@ -427,6 +446,7 @@ void GroupWindow::rebuildLayout() {
     inputLayout->addWidget(voiceButton);
     inputLayout->addWidget(deleteVoiceButton);
     inputLayout->addWidget(attachmentButton);
+    inputLayout->addWidget(cameraButton);
     inputLayout->addWidget(ui->sendButton);
 
     root->addLayout(topRow);
@@ -656,6 +676,323 @@ void GroupWindow::onAttachmentClicked() {
     }
 }
 
+
+void GroupWindow::onCameraClicked() {
+    QString selectedGroup = ui->groupSelector->currentText().trimmed();
+
+    if (selectedGroup.isEmpty()) {
+        ui->statusLabel->setText("Create or join a group first.");
+        return;
+    }
+
+    QCameraDevice cameraDevice = QMediaDevices::defaultVideoInput();
+
+    if (cameraDevice.isNull()) {
+        QMessageBox::warning(
+            this,
+            "Camera not found",
+            "No camera device was found on this computer."
+        );
+        return;
+    }
+
+    QDialog cameraDialog(this);
+    cameraDialog.setWindowTitle("Group Camera Capture");
+    cameraDialog.setMinimumSize(760, 590);
+    cameraDialog.setStyleSheet(
+        "QDialog { background-color:#1e1f2e; color:white; }"
+        "QLabel { color:#e0e0f0; }"
+        "QPushButton {"
+        "background-color:#2a2b3d;"
+        "color:white;"
+        "border:2px solid #4a4b6a;"
+        "border-radius:18px;"
+        "padding:8px 14px;"
+        "font-weight:bold;"
+        "}"
+        "QPushButton:hover { background-color:#3a3b55; border:2px solid #7c6af7; }"
+        "QPushButton:pressed { background-color:#7c6af7; }"
+    );
+
+    QVBoxLayout* root = new QVBoxLayout(&cameraDialog);
+    root->setContentsMargins(16, 16, 16, 16);
+    root->setSpacing(12);
+
+    QLabel* titleLabel = new QLabel("Camera Preview", &cameraDialog);
+    titleLabel->setStyleSheet(
+        "QLabel { color:#7c6af7; font-size:16px; font-weight:bold; }"
+    );
+
+    QVideoWidget* videoWidget = new QVideoWidget(&cameraDialog);
+    videoWidget->setMinimumHeight(360);
+    videoWidget->setStyleSheet(
+        "QVideoWidget { background-color:#000000; border-radius:12px; }"
+    );
+
+    QLabel* timerLabel = new QLabel("Video time: 00:00", &cameraDialog);
+    timerLabel->setStyleSheet(
+        "QLabel { color:#ffcc66; font-weight:bold; font-size:13px; }"
+    );
+    timerLabel->hide();
+
+    QLabel* statusLabel = new QLabel("Ready. Take a photo or record a video.", &cameraDialog);
+    statusLabel->setStyleSheet(
+        "QLabel { background-color:#303030; padding:8px; border-radius:8px; }"
+    );
+
+    QHBoxLayout* buttonsLayout = new QHBoxLayout();
+    buttonsLayout->setSpacing(10);
+
+    QPushButton* takePhotoButton = new QPushButton("📸 Take Photo", &cameraDialog);
+    QPushButton* startVideoButton = new QPushButton("⏺ Start Video", &cameraDialog);
+    QPushButton* stopVideoButton = new QPushButton("⏹ Stop Video", &cameraDialog);
+    QPushButton* sendButton = new QPushButton("Send ✅", &cameraDialog);
+    QPushButton* deleteButton = new QPushButton("Delete 🗑", &cameraDialog);
+    QPushButton* closeButton = new QPushButton("Close", &cameraDialog);
+
+    stopVideoButton->setEnabled(false);
+    sendButton->setEnabled(false);
+    deleteButton->setEnabled(false);
+
+    buttonsLayout->addWidget(takePhotoButton);
+    buttonsLayout->addWidget(startVideoButton);
+    buttonsLayout->addWidget(stopVideoButton);
+    buttonsLayout->addWidget(sendButton);
+    buttonsLayout->addWidget(deleteButton);
+    buttonsLayout->addWidget(closeButton);
+
+    root->addWidget(titleLabel);
+    root->addWidget(videoWidget, 1);
+    root->addWidget(timerLabel);
+    root->addWidget(statusLabel);
+    root->addLayout(buttonsLayout);
+
+    QMediaCaptureSession cameraSession;
+    QCamera camera(cameraDevice);
+    QImageCapture imageCapture;
+    QMediaRecorder videoRecorder;
+    QAudioInput videoAudioInput;
+
+    cameraSession.setCamera(&camera);
+    cameraSession.setAudioInput(&videoAudioInput);
+    cameraSession.setVideoOutput(videoWidget);
+    cameraSession.setImageCapture(&imageCapture);
+    cameraSession.setRecorder(&videoRecorder);
+
+    QMediaFormat videoFormat;
+    videoFormat.setFileFormat(QMediaFormat::MPEG4);
+    videoRecorder.setMediaFormat(videoFormat);
+    videoRecorder.setQuality(QMediaRecorder::NormalQuality);
+
+    QString capturedFilePath;
+    QString pendingVideoFilePath;
+    bool isVideoRecording = false;
+    int videoSeconds = 0;
+
+    QTimer videoTimer(&cameraDialog);
+
+    auto updateVideoTimerText = [&]() {
+        int minutes = videoSeconds / 60;
+        int seconds = videoSeconds % 60;
+
+        timerLabel->setText(
+            QString("Video time: %1:%2")
+                .arg(minutes, 2, 10, QChar('0'))
+                .arg(seconds, 2, 10, QChar('0'))
+        );
+    };
+
+    connect(&videoTimer, &QTimer::timeout,
+            &cameraDialog,
+            [&]() {
+                videoSeconds++;
+                updateVideoTimerText();
+            });
+
+    connect(&imageCapture, &QImageCapture::imageSaved,
+            &cameraDialog,
+            [&](int, const QString& fileName) {
+                capturedFilePath = fileName;
+
+                statusLabel->setText("Photo captured. Click Send or Delete.");
+                sendButton->setEnabled(true);
+                deleteButton->setEnabled(true);
+                takePhotoButton->setEnabled(true);
+                startVideoButton->setEnabled(true);
+            });
+
+    connect(&imageCapture, &QImageCapture::errorOccurred,
+            &cameraDialog,
+            [&](int, QImageCapture::Error, const QString& errorString) {
+                statusLabel->setText("Photo capture failed: " + errorString);
+                takePhotoButton->setEnabled(true);
+                startVideoButton->setEnabled(true);
+            });
+
+    connect(&videoRecorder, &QMediaRecorder::recorderStateChanged,
+            &cameraDialog,
+            [&](QMediaRecorder::RecorderState state) {
+                if (state == QMediaRecorder::RecordingState) {
+                    statusLabel->setText("Recording video...");
+                }
+
+                if (state == QMediaRecorder::StoppedState && isVideoRecording) {
+                    isVideoRecording = false;
+                    videoTimer.stop();
+                    QApplication::beep();
+
+                    if (!pendingVideoFilePath.isEmpty() &&
+                        QFileInfo::exists(pendingVideoFilePath)) {
+
+                        capturedFilePath = pendingVideoFilePath;
+                        statusLabel->setText("Video recorded. Click Send or Delete.");
+                        sendButton->setEnabled(true);
+                        deleteButton->setEnabled(true);
+                    } else {
+                        statusLabel->setText("Video file was not created.");
+                    }
+
+                    takePhotoButton->setEnabled(true);
+                    startVideoButton->setEnabled(true);
+                    stopVideoButton->setEnabled(false);
+                }
+            });
+
+    connect(&videoRecorder, &QMediaRecorder::errorOccurred,
+            &cameraDialog,
+            [&](QMediaRecorder::Error, const QString& errorString) {
+                isVideoRecording = false;
+                videoTimer.stop();
+
+                statusLabel->setText("Video recording failed: " + errorString);
+
+                takePhotoButton->setEnabled(true);
+                startVideoButton->setEnabled(true);
+                stopVideoButton->setEnabled(false);
+            });
+
+    connect(takePhotoButton, &QPushButton::clicked,
+            &cameraDialog,
+            [&]() {
+                if (!capturedFilePath.isEmpty()) {
+                    QFile::remove(capturedFilePath);
+                    capturedFilePath.clear();
+                }
+
+                QString outputPath = createCameraOutputPath("jpg", "GroupCameraPhotos");
+
+                statusLabel->setText("Capturing photo...");
+                takePhotoButton->setEnabled(false);
+                startVideoButton->setEnabled(false);
+                sendButton->setEnabled(false);
+                deleteButton->setEnabled(false);
+
+                QApplication::beep();
+                imageCapture.captureToFile(outputPath);
+            });
+
+    connect(startVideoButton, &QPushButton::clicked,
+            &cameraDialog,
+            [&]() {
+                if (!capturedFilePath.isEmpty()) {
+                    QFile::remove(capturedFilePath);
+                    capturedFilePath.clear();
+                }
+
+                pendingVideoFilePath = createCameraOutputPath("mp4", "GroupCameraVideos");
+
+                videoRecorder.setOutputLocation(QUrl::fromLocalFile(pendingVideoFilePath));
+
+                isVideoRecording = true;
+                videoSeconds = 0;
+                updateVideoTimerText();
+                timerLabel->show();
+
+                takePhotoButton->setEnabled(false);
+                startVideoButton->setEnabled(false);
+                stopVideoButton->setEnabled(true);
+                sendButton->setEnabled(false);
+                deleteButton->setEnabled(false);
+
+                QApplication::beep();
+                videoRecorder.record();
+                videoTimer.start(1000);
+            });
+
+    connect(stopVideoButton, &QPushButton::clicked,
+            &cameraDialog,
+            [&]() {
+                if (isVideoRecording) {
+                    statusLabel->setText("Stopping video...");
+                    QApplication::beep();
+                    videoRecorder.stop();
+                }
+            });
+
+    connect(deleteButton, &QPushButton::clicked,
+            &cameraDialog,
+            [&]() {
+                if (!capturedFilePath.isEmpty()) {
+                    QFile::remove(capturedFilePath);
+                }
+
+                capturedFilePath.clear();
+                pendingVideoFilePath.clear();
+
+                videoSeconds = 0;
+                updateVideoTimerText();
+                timerLabel->hide();
+
+                sendButton->setEnabled(false);
+                deleteButton->setEnabled(false);
+
+                statusLabel->setText("Deleted. Take a new photo or video.");
+            });
+
+    connect(sendButton, &QPushButton::clicked,
+            &cameraDialog,
+            [&]() {
+                if (capturedFilePath.isEmpty() ||
+                    !QFileInfo::exists(capturedFilePath)) {
+
+                    statusLabel->setText("No captured file to send.");
+                    return;
+                }
+
+                statusLabel->setText("Sending captured file...");
+                ui->statusLabel->setText("Sending attachment...");
+
+                if (sendAttachmentFile(selectedGroup, capturedFilePath)) {
+                    statusLabel->setText("Captured file sent ✅");
+                    cameraDialog.accept();
+                } else {
+                    statusLabel->setText("Failed to send captured file ❌");
+                    ui->statusLabel->setText("Failed to send attachment ❌");
+                }
+            });
+
+    connect(closeButton, &QPushButton::clicked,
+            &cameraDialog,
+            [&]() {
+                if (isVideoRecording) {
+                    videoRecorder.stop();
+                }
+
+                videoTimer.stop();
+                cameraDialog.reject();
+            });
+
+    camera.start();
+    cameraDialog.exec();
+
+    if (isVideoRecording) {
+        videoRecorder.stop();
+    }
+
+    videoTimer.stop();
+    camera.stop();
+}
+
 void GroupWindow::startVoiceRecording() {
     clearPendingVoice();
 
@@ -849,6 +1186,30 @@ bool GroupWindow::sendAttachmentFile(const QString& selectedGroup, const QString
     return sent;
 }
 
+
+QString GroupWindow::createCameraOutputPath(const QString& extension,
+                                            const QString& folderName) const {
+    QString baseDir = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+
+    if (baseDir.isEmpty()) {
+        baseDir = QDir::homePath();
+    }
+
+    QDir dir(baseDir + "/CampusConnect/" + folderName);
+
+    if (!dir.exists()) {
+        dir.mkpath(".");
+    }
+
+    QString fileName =
+        "camera_" +
+        QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz") +
+        "." +
+        extension;
+
+    return dir.absoluteFilePath(fileName);
+}
+
 void GroupWindow::playVoiceFile(const QString& filePath) {
     QFileInfo info(filePath);
 
@@ -1025,3 +1386,4 @@ void GroupWindow::refreshMessages() {
         );
     }
 }
+
