@@ -68,15 +68,29 @@ GroupWindow::GroupWindow(std::shared_ptr<ChatController> controller, QWidget* pa
     ui->groupDisplay->setTextInteractionFlags(Qt::TextBrowserInteraction);
     ui->groupDisplay->viewport()->installEventFilter(this);
 
-    connect(ui->createButton, &QPushButton::clicked, this, [this]() { onCreateClicked(); });
-    connect(ui->joinButton, &QPushButton::clicked, this, [this]() { onJoinClicked(); });
-    connect(ui->sendButton, &QPushButton::clicked, this, [this]() { onSendClicked(); });
-    connect(voiceButton, &QPushButton::clicked, this, [this]() { onVoiceClicked(); });
-    connect(deleteVoiceButton, &QPushButton::clicked, this, [this]() { onDeleteVoiceClicked(); });
-    connect(attachmentButton, &QPushButton::clicked, this, [this]() { onAttachmentClicked(); });
+    connect(ui->createButton, &QPushButton::clicked,
+            this, [this]() { onCreateClicked(); });
 
-    connect(ui->groupNameInput, &QLineEdit::returnPressed, this, [this]() { onJoinClicked(); });
-    connect(ui->groupMessageInput, &QLineEdit::returnPressed, this, [this]() { onSendClicked(); });
+    connect(ui->joinButton, &QPushButton::clicked,
+            this, [this]() { onJoinClicked(); });
+
+    connect(ui->sendButton, &QPushButton::clicked,
+            this, [this]() { onSendClicked(); });
+
+    connect(voiceButton, &QPushButton::clicked,
+            this, [this]() { onVoiceClicked(); });
+
+    connect(deleteVoiceButton, &QPushButton::clicked,
+            this, [this]() { onDeleteVoiceClicked(); });
+
+    connect(attachmentButton, &QPushButton::clicked,
+            this, [this]() { onAttachmentClicked(); });
+
+    connect(ui->groupNameInput, &QLineEdit::returnPressed,
+            this, [this]() { onJoinClicked(); });
+
+    connect(ui->groupMessageInput, &QLineEdit::returnPressed,
+            this, [this]() { onSendClicked(); });
 
     connect(ui->groupMessageInput, &QLineEdit::textChanged,
             this, [this](const QString& text) {
@@ -132,7 +146,8 @@ GroupWindow::GroupWindow(std::shared_ptr<ChatController> controller, QWidget* pa
                 openPrivateWindow(text);
             });
 
-    connect(recordingTimer, &QTimer::timeout, this, [this]() { updateRecordingTimer(); });
+    connect(recordingTimer, &QTimer::timeout,
+            this, [this]() { updateRecordingTimer(); });
 
     connect(refreshTimer, &QTimer::timeout,
             this, [this]() {
@@ -630,8 +645,14 @@ void GroupWindow::onAttachmentClicked() {
         return;
     }
 
+    ui->statusLabel->setText("Sending attachment...");
+
     if (!sendAttachmentFile(selectedGroup, filePath)) {
-        ui->statusLabel->setText("Failed to send attachment.");
+        ui->statusLabel->setText("Failed to send attachment ❌");
+
+        QTimer::singleShot(2500, this, [this, selectedGroup]() {
+            ui->statusLabel->setText("Current group: " + selectedGroup);
+        });
     }
 }
 
@@ -817,8 +838,12 @@ bool GroupWindow::sendAttachmentFile(const QString& selectedGroup, const QString
     );
 
     if (sent) {
-        ui->statusLabel->setText("Attachment sent to group: " + selectedGroup);
+        ui->statusLabel->setText("Attachment sent to group ✅");
         refreshMessages();
+
+        QTimer::singleShot(2500, this, [this, selectedGroup]() {
+            ui->statusLabel->setText("Current group: " + selectedGroup);
+        });
     }
 
     return sent;
