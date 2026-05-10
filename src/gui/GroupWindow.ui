@@ -6,24 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>660</width>
-    <height>420</height>
+    <width>705</width>
+    <height>455</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Group Chat</string>
   </property>
-
-  <!-- ── Global dialog stylesheet ── -->
   <property name="styleSheet">
    <string>
     QDialog {
       background-color: #1e1f2e;
       color: #e0e0f0;
-      font-family: "Segoe UI", Arial, sans-serif;
+      font-family: &quot;Segoe UI&quot;, Arial, sans-serif;
     }
 
-    /* ── Group name input ── */
     QLineEdit#groupNameInput {
       background-color: #2a2b3d;
       color: #ffffff;
@@ -37,7 +34,6 @@
       border: 2px solid #7c6af7;
     }
 
-    /* ── Message input ── */
     QLineEdit#groupMessageInput {
       background-color: #2a2b3d;
       color: #e0e0f0;
@@ -50,16 +46,14 @@
       border: 2px solid #7c6af7;
     }
 
-    /* ── Shared button base ── */
     QPushButton {
       border-radius: 10px;
       padding: 5px 14px;
       font-size: 12px;
       font-weight: bold;
-      font-family: "Segoe UI", Arial, sans-serif;
+      font-family: &quot;Segoe UI&quot;, Arial, sans-serif;
     }
 
-    /* ── Create Group button ── */
     QPushButton#createButton {
       background-color: #7c6af7;
       color: #ffffff;
@@ -72,7 +66,6 @@
       background-color: #5a4fcf;
     }
 
-    /* ── Join Group button ── */
     QPushButton#joinButton {
       background-color: #2a2b3d;
       color: #7c6af7;
@@ -87,7 +80,6 @@
       color: #ffffff;
     }
 
-    /* ── Send button ── */
     QPushButton#sendButton {
       background-color: #3ecf8e;
       color: #1e1f2e;
@@ -100,7 +92,6 @@
       background-color: #28a570;
     }
 
-    /* ── ComboBox ── */
     QComboBox#groupSelector {
       background-color: #2a2b3d;
       color: #e0e0f0;
@@ -124,7 +115,6 @@
       border-radius: 6px;
     }
 
-    /* ── Chat display ── */
     QTextEdit#groupDisplay {
       background-color: #16172a;
       color: #dcdcf0;
@@ -132,10 +122,9 @@
       border-radius: 12px;
       padding: 8px;
       font-size: 12px;
-      font-family: "Segoe UI", Arial, sans-serif;
+      font-family: &quot;Segoe UI&quot;, Arial, sans-serif;
     }
 
-    /* ── Scrollbars ── */
     QScrollBar:vertical {
       background: #1e1f2e;
       width: 8px;
@@ -154,77 +143,132 @@
     }
    </string>
   </property>
-
-  <!-- ── Widgets (layout unchanged, just cleaned up) ── -->
-
   <widget class="QLineEdit" name="groupNameInput">
    <property name="geometry">
-    <rect><x>30</x><y>20</y><width>300</width><height>34</height></rect>
-   </property>
-   <property name="placeholderText">
-    <string>Group name...</string>
+    <rect>
+     <x>30</x>
+     <y>20</y>
+     <width>300</width>
+     <height>34</height>
+    </rect>
    </property>
    <property name="text">
     <string>My group</string>
    </property>
+   <property name="placeholderText">
+    <string>Group name...</string>
+   </property>
   </widget>
-
   <widget class="QPushButton" name="createButton">
    <property name="geometry">
-    <rect><x>360</x><y>20</y><width>160</width><height>34</height></rect>
+    <rect>
+     <x>360</x>
+     <y>20</y>
+     <width>160</width>
+     <height>34</height>
+    </rect>
    </property>
    <property name="text">
     <string>＋  Create Group</string>
    </property>
   </widget>
-
   <widget class="QPushButton" name="joinButton">
    <property name="geometry">
-    <rect><x>30</x><y>66</y><width>160</width><height>34</height></rect>
+    <rect>
+     <x>30</x>
+     <y>66</y>
+     <width>160</width>
+     <height>34</height>
+    </rect>
    </property>
    <property name="text">
     <string>→  Join Group</string>
    </property>
   </widget>
-
   <widget class="QComboBox" name="groupSelector">
    <property name="geometry">
-    <rect><x>210</x><y>66</y><width>200</width><height>34</height></rect>
+    <rect>
+     <x>210</x>
+     <y>66</y>
+     <width>200</width>
+     <height>34</height>
+    </rect>
    </property>
   </widget>
-
   <widget class="QTextEdit" name="groupDisplay">
    <property name="geometry">
-    <rect><x>30</x><y>116</y><width>600</width><height>200</height></rect>
-   </property>
-   <property name="html">
-    <string>&lt;!DOCTYPE HTML&gt;&lt;html&gt;&lt;body style="font-family:'Segoe UI'; font-size:12pt; color:#9a9ac0;"&gt;
-    &lt;p style="margin:6px 0;"&gt;&lt;i&gt;Group messages will appear here…&lt;/i&gt;&lt;/p&gt;
-    &lt;/body&gt;&lt;/html&gt;</string>
+    <rect>
+     <x>30</x>
+     <y>110</y>
+     <width>600</width>
+     <height>200</height>
+    </rect>
    </property>
    <property name="readOnly">
     <bool>true</bool>
    </property>
+   <property name="html">
+    <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;/head&gt;
+&lt;body style=&quot; font-family:'Segoe UI','Arial','sans-serif'; font-size:12px;&quot;&gt;
+&lt;p style=&quot; margin-top:6px; margin-bottom:6px;&quot;&gt;&lt;span style=&quot; font-family:'Segoe UI'; font-size:12pt; font-style:italic; color:#9a9ac0;&quot;&gt;Group messages will appear here…&lt;/span&gt;&lt;/p&gt;
+&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
   </widget>
-
   <widget class="QLineEdit" name="groupMessageInput">
    <property name="geometry">
-    <rect><x>30</x><y>330</y><width>460</width><height>36</height></rect>
+    <rect>
+     <x>30</x>
+     <y>330</y>
+     <width>460</width>
+     <height>36</height>
+    </rect>
    </property>
    <property name="placeholderText">
     <string>Type a message...</string>
    </property>
   </widget>
-
   <widget class="QPushButton" name="sendButton">
    <property name="geometry">
-    <rect><x>506</x><y>330</y><width>124</width><height>36</height></rect>
+    <rect>
+     <x>506</x>
+     <y>330</y>
+     <width>124</width>
+     <height>36</height>
+    </rect>
    </property>
    <property name="text">
     <string>Send  ➤</string>
    </property>
   </widget>
-
+  <widget class="QLabel" name="statusLabel">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>400</y>
+     <width>241</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <italic>true</italic>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Shape::StyledPanel</enum>
+   </property>
+   <property name="lineWidth">
+    <number>0</number>
+   </property>
+   <property name="text">
+    <string>Sent to group: </string>
+   </property>
+   <property name="textFormat">
+    <enum>Qt::TextFormat::AutoText</enum>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>
