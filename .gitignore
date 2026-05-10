@@ -1,6 +1,30 @@
+<<<<<<< HEAD
 build/
 *.exe
 *.obj
 *.o
 *.dll
+=======
+# Build folder
+build/
+
+# Executables
+*.exe
+
+# Object files
+*.o
+*.obj
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Qt generated files
+src/gui/ui_*.h
+src/gui/qrc_resources.cpp
+
+# User config files
+>>>>>>> origin/Marwan
 *.user

@@ -1,6 +1,7 @@
 #include "LoginWindow.h"
 #include "ChatWindow.h"
 #include "../logic/ChatController.h"
+<<<<<<< HEAD
 
 #include <QVBoxLayout>
 #include <QLineEdit>
@@ -37,12 +38,41 @@ void LoginWindow::onConnectClicked() {
 
     if (controller->connectUser(username)) {
         statusLabel->setText("Connected as: " + QString::fromStdString(username));
+=======
+#include "ui_LoginWindow.h"
+
+LoginWindow::LoginWindow(std::shared_ptr<ChatController> controller, QWidget* parent)
+    : QWidget(parent), ui(new Ui::LoginWindow), controller(controller)
+{
+    ui->setupUi(this);
+
+    connect(ui->connectButton, &QPushButton::clicked,
+            this, [this]() { onConnectClicked(); });
+
+    connect(ui->usernameInput, &QLineEdit::returnPressed,
+            this, [this]() { onConnectClicked(); });
+}
+
+LoginWindow::~LoginWindow() {
+    delete ui;
+}
+
+void LoginWindow::onConnectClicked() {
+    std::string username = ui->usernameInput->text().toStdString();
+
+    if (controller->connectUser(username)) {
+        ui->statusLabel->setText("Connected as: " + QString::fromStdString(username));
+>>>>>>> origin/Marwan
 
         ChatWindow* chatWindow = new ChatWindow(controller);
         chatWindow->show();
 
         this->close();
     } else {
+<<<<<<< HEAD
         statusLabel->setText("Invalid username");
+=======
+        ui->statusLabel->setText("Invalid username");
+>>>>>>> origin/Marwan
     }
 }

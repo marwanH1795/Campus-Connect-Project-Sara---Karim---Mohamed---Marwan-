@@ -5,6 +5,10 @@
 #include <QTcpSocket>
 #include <QByteArray>
 #include <QStringList>
+<<<<<<< HEAD
+=======
+#include <functional>
+>>>>>>> origin/Marwan
 
 class TcpNetworkClient : public INetworkClient {
 private:

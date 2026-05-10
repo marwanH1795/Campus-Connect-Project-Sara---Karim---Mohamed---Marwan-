@@ -14,12 +14,19 @@ TcpNetworkClient::TcpNetworkClient() {
     QObject::connect(socket, &QTcpSocket::connected, [this]() {
         qDebug() << "Connected to server";
 
+<<<<<<< HEAD
         // send any queued messages
+=======
+>>>>>>> origin/Marwan
         for (const QString& msg : pendingMessages) {
             QByteArray data = msg.toUtf8();
             data.append('\n');
             socket->write(data);
         }
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/Marwan
         pendingMessages.clear();
     });
 
@@ -38,7 +45,16 @@ void TcpNetworkClient::setMessageHandler(std::function<void(const std::string&)>
 }
 
 void TcpNetworkClient::connectToServer(const std::string& username) {
+<<<<<<< HEAD
     Q_UNUSED(username);
+=======
+    QString connectMessage =
+        QString("{\"type\":\"connect\",\"sender\":\"%1\",\"target\":\"\",\"groupId\":\"\",\"content\":\"\",\"timestamp\":\"\"}")
+            .arg(QString::fromStdString(username));
+
+    pendingMessages.append(connectMessage);
+
+>>>>>>> origin/Marwan
     socket->connectToHost("127.0.0.1", 12345);
 }
 
@@ -50,7 +66,10 @@ void TcpNetworkClient::sendMessage(const std::string& message) {
         data.append('\n');
         socket->write(data);
     } else {
+<<<<<<< HEAD
         // queue message until connection is ready
+=======
+>>>>>>> origin/Marwan
         pendingMessages.append(qmsg);
     }
 }
@@ -58,14 +77,27 @@ void TcpNetworkClient::sendMessage(const std::string& message) {
 void TcpNetworkClient::processBuffer() {
     while (true) {
         int index = buffer.indexOf('\n');
+<<<<<<< HEAD
         if (index == -1)
             break;
+=======
+
+        if (index == -1) {
+            break;
+        }
+>>>>>>> origin/Marwan
 
         QByteArray line = buffer.left(index).trimmed();
         buffer.remove(0, index + 1);
 
+<<<<<<< HEAD
         if (line.isEmpty())
             continue;
+=======
+        if (line.isEmpty()) {
+            continue;
+        }
+>>>>>>> origin/Marwan
 
         if (messageHandler) {
             messageHandler(line.toStdString());

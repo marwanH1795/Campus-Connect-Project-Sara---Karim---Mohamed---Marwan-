@@ -53,6 +53,10 @@ std::string Message::messageTypeToString(MessageType type) {
         case MessageType::CreateGroup: return "create_group";
         case MessageType::JoinGroup: return "join_group";
         case MessageType::GroupMessage: return "group_message";
+<<<<<<< HEAD
+=======
+        case MessageType::Typing: return "typing";
+>>>>>>> origin/Marwan
         case MessageType::UserList: return "user_list";
         case MessageType::Error: return "error";
         case MessageType::History: return "history";
@@ -70,6 +74,10 @@ MessageType Message::stringToMessageType(const std::string& typeString) {
     if (typeString == "create_group") return MessageType::CreateGroup;
     if (typeString == "join_group") return MessageType::JoinGroup;
     if (typeString == "group_message") return MessageType::GroupMessage;
+<<<<<<< HEAD
+=======
+    if (typeString == "typing") return MessageType::Typing;
+>>>>>>> origin/Marwan
     if (typeString == "user_list") return MessageType::UserList;
     if (typeString == "error") return MessageType::Error;
     if (typeString == "history") return MessageType::History;

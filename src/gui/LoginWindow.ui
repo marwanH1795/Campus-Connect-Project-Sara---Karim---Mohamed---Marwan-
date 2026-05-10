@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
+<<<<<<< HEAD
  <class>Form</class>
  <widget class="QWidget" name="Form">
+=======
+ <class>LoginWindow</class>
+ <widget class="QWidget" name="LoginWindow">
+>>>>>>> origin/Marwan
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -25,6 +30,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+<<<<<<< HEAD
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
@@ -32,6 +38,23 @@
      <y>10</y>
      <width>151</width>
      <height>201</height>
+=======
+  <property name="styleSheet">
+   <string notr="true">QWidget#LoginWindow {
+    background-image: url(:/images/background.jpeg);
+    background-repeat: no-repeat;
+    background-position: center;
+    color: white;
+}</string>
+  </property>
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>110</x>
+     <y>20</y>
+     <width>193</width>
+     <height>268</height>
+>>>>>>> origin/Marwan
     </rect>
    </property>
    <property name="minimumSize">
@@ -41,14 +64,78 @@
     </size>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
+<<<<<<< HEAD
+=======
+    <property name="spacing">
+     <number>16</number>
+    </property>
+    <property name="leftMargin">
+     <number>22</number>
+    </property>
+    <property name="topMargin">
+     <number>24</number>
+    </property>
+    <property name="rightMargin">
+     <number>22</number>
+    </property>
+    <property name="bottomMargin">
+     <number>24</number>
+    </property>
+    <item>
+     <widget class="QLabel" name="titleLabel">
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: white;</string>
+      </property>
+      <property name="text">
+       <string>Campus Connect</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="subtitleLabel">
+      <property name="font">
+       <font>
+        <pointsize>13</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: #d0d0d0;</string>
+      </property>
+      <property name="text">
+       <string>Login to continue</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+>>>>>>> origin/Marwan
     <item>
      <widget class="QLineEdit" name="usernameInput">
       <property name="minimumSize">
        <size>
         <width>149</width>
+<<<<<<< HEAD
         <height>22</height>
        </size>
       </property>
+=======
+        <height>25</height>
+       </size>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+      </property>
+>>>>>>> origin/Marwan
       <property name="placeholderText">
        <string>Enter username </string>
       </property>
@@ -59,9 +146,21 @@
       <property name="minimumSize">
        <size>
         <width>149</width>
+<<<<<<< HEAD
         <height>18</height>
        </size>
       </property>
+=======
+        <height>25</height>
+       </size>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: #4f8cff;
+color: white;
+border-radius: 10px;
+font-weight: bold;</string>
+      </property>
+>>>>>>> origin/Marwan
       <property name="text">
        <string>Connect</string>
       </property>
@@ -72,17 +171,71 @@
       <property name="minimumSize">
        <size>
         <width>149</width>
+<<<<<<< HEAD
         <height>73</height>
        </size>
       </property>
       <property name="text">
        <string>Disconnected</string>
+=======
+        <height>72</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>13</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: #d0d0d0;</string>
+      </property>
+      <property name="text">
+       <string>Status:  Disconnected</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+>>>>>>> origin/Marwan
       </property>
      </widget>
     </item>
    </layout>
   </widget>
+<<<<<<< HEAD
  </widget>
  <resources/>
+=======
+  <widget class="QFrame" name="frame">
+   <property name="geometry">
+    <rect>
+     <x>110</x>
+     <y>19</y>
+     <width>191</width>
+     <height>261</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: rgba(0, 0, 0, 0.6);
+border-radius: 15px;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Shape::StyledPanel</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Shadow::Raised</enum>
+   </property>
+  </widget>
+  <zorder>frame</zorder>
+  <zorder>layoutWidget</zorder>
+ </widget>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
+>>>>>>> origin/Marwan
  <connections/>
 </ui>

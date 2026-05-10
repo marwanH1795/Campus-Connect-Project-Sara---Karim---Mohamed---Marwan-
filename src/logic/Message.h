@@ -11,6 +11,10 @@ enum class MessageType {
     CreateGroup,
     JoinGroup,
     GroupMessage,
+<<<<<<< HEAD
+=======
+    Typing,
+>>>>>>> origin/Marwan
     UserList,
     Error,
     History,

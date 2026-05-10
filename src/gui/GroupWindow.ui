@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>860</width>
+    <height>560</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Group Chat</string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <property name="spacing">
+    <number>14</number>
+   </property>
+   <property name="leftMargin">
+    <number>20</number>
+   </property>
+   <property name="topMargin">
+    <number>20</number>
+   </property>
+   <property name="rightMargin">
+    <number>20</number>
+   </property>
+   <property name="bottomMargin">
+    <number>20</number>
+   </property>
+
+   <item>
+    <layout class="QHBoxLayout" name="createLayout">
+     <item>
+      <widget class="QLineEdit" name="groupNameInput">
+       <property name="minimumHeight">
+        <number>46</number>
+       </property>
+       <property name="placeholderText">
+        <string>Group name...</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="createButton">
+       <property name="minimumSize">
+        <size>
+         <width>170</width>
+         <height>46</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>210</width>
+         <height>46</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>＋  Create Group</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+
+   <item>
+    <layout class="QHBoxLayout" name="joinLayout">
+     <item>
+      <widget class="QPushButton" name="joinButton">
+       <property name="minimumSize">
+        <size>
+         <width>170</width>
+         <height>46</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>210</width>
+         <height>46</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>→  Join Group</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="groupSelector">
+       <property name="minimumHeight">
+        <number>46</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+
+   <item>
+    <widget class="QTextEdit" name="groupDisplay">
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+
+   <item>
+    <widget class="QFrame" name="inputBar">
+     <property name="minimumHeight">
+      <number>66</number>
+     </property>
+     <layout class="QHBoxLayout" name="inputLayout">
+      <property name="leftMargin">
+       <number>12</number>
+      </property>
+      <property name="topMargin">
+       <number>8</number>
+      </property>
+      <property name="rightMargin">
+       <number>12</number>
+      </property>
+      <property name="bottomMargin">
+       <number>8</number>
+      </property>
+      <item>
+       <widget class="QLineEdit" name="groupMessageInput">
+        <property name="minimumHeight">
+         <number>44</number>
+        </property>
+        <property name="placeholderText">
+         <string>Type a message...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="sendButton">
+        <property name="minimumSize">
+         <size>
+          <width>105</width>
+          <height>46</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>115</width>
+          <height>46</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Send  ➤</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
+   <item>
+    <widget class="QLabel" name="statusLabel">
+     <property name="minimumHeight">
+      <number>34</number>
+     </property>
+     <property name="maximumWidth">
+      <number>420</number>
+     </property>
+     <property name="text">
+      <string>Sent to group:</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
