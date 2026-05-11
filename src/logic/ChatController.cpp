@@ -43,12 +43,22 @@ ChatController::ChatController(std::shared_ptr<INetworkClient> net)
 }
 
 bool ChatController::connectUser(const std::string& username) {
+    return connectUser(username, "127.0.0.1", 12345);
+}
+
+bool ChatController::connectUser(const std::string& username,
+                                 const std::string& host,
+                                 unsigned short port) {
     if (!InputValidator::isValidUsername(username)) {
         return false;
     }
 
+    if (host.empty() || port == 0) {
+        return false;
+    }
+
     state.setCurrentUser(username);
-    network->connectToServer(username);
+    network->connectToServer(username, host, port);
     return true;
 }
 

@@ -1,7 +1,7 @@
 #include "LoginWindow.h"
 #include "ChatWindow.h"
 #include "../logic/ChatController.h"
-#include "ui_LoginWindow.h"
+#include <ui_LoginWindow.h>
 
 LoginWindow::LoginWindow(std::shared_ptr<ChatController> controller, QWidget* parent)
     : QWidget(parent), ui(new Ui::LoginWindow), controller(controller)
@@ -21,8 +21,10 @@ LoginWindow::~LoginWindow() {
 
 void LoginWindow::onConnectClicked() {
     std::string username = ui->usernameInput->text().toStdString();
+    std::string host = ui->serverInput->text().trimmed().toStdString();
+    unsigned short port = static_cast<unsigned short>(ui->portInput->value());
 
-    if (controller->connectUser(username)) {
+    if (controller->connectUser(username, host, port)) {
         ui->statusLabel->setText("Connected as: " + QString::fromStdString(username));
 
         ChatWindow* chatWindow = new ChatWindow(controller);

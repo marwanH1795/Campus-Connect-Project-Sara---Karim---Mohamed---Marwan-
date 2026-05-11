@@ -48,6 +48,9 @@ public:
     ChatController(std::shared_ptr<INetworkClient> net);
 
     bool connectUser(const std::string& username);
+    bool connectUser(const std::string& username,
+                     const std::string& host,
+                     unsigned short port);
 
     bool sendPublicMessage(const std::string& content);
     bool sendPrivateMessage(const std::string& target, const std::string& content);
