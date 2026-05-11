@@ -34,7 +34,9 @@ void TcpNetworkClient::setBinaryHandler(std::function<void(const QByteArray&)> h
     binaryHandler = handler;
 }
 
-void TcpNetworkClient::connectToServer(const std::string& username) {
+void TcpNetworkClient::connectToServer(const std::string& username,
+                                       const std::string& host,
+                                       unsigned short port) {
     QObject::connect(socket, &QTcpSocket::connected, [this, username]() {
         QString connectMessage =
             QString("{\"type\":\"connect\",\"sender\":\"%1\",\"target\":\"\",\"groupId\":\"\",\"content\":\"\",\"timestamp\":\"\"}")
@@ -43,7 +45,7 @@ void TcpNetworkClient::connectToServer(const std::string& username) {
         sendMessage(connectMessage.toStdString());
     });
 
-    socket->connectToHost("127.0.0.1", 12345);
+    socket->connectToHost(QString::fromStdString(host), port);
 }
 
 void TcpNetworkClient::sendMessage(const std::string& message) {

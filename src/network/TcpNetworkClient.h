@@ -21,7 +21,9 @@ public:
     TcpNetworkClient();
     ~TcpNetworkClient();
 
-    void connectToServer(const std::string& username) override;
+    void connectToServer(const std::string& username,
+                         const std::string& host,
+                         unsigned short port) override;
 
     void sendMessage(const std::string& message) override;
     void sendBinary(const QByteArray& data) override;

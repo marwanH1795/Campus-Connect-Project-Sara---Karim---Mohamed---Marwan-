@@ -6,7 +6,12 @@ void MockNetworkClient::setMessageHandler(std::function<void(const std::string&)
 }
 
 // simulate connection
-void MockNetworkClient::connectToServer(const std::string& username) {
+void MockNetworkClient::connectToServer(const std::string& username,
+                                        const std::string& host,
+                                        unsigned short port) {
+    (void)host;
+    (void)port;
+
     if (messageHandler) {
         std::string response =
             "{"
