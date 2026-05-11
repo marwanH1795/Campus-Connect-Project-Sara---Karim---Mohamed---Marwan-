@@ -9,6 +9,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+enable_testing()
+
 find_package(Qt6 REQUIRED COMPONENTS
     Widgets
     Core
@@ -16,6 +18,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     Gui
     Multimedia
     MultimediaWidgets
+    Test
 )
 
 add_executable(app
@@ -105,3 +108,36 @@ target_link_libraries(server PRIVATE
     ws2_32
     mswsock
 )
+
+add_executable(tests
+    tests/test_chatstate.cpp
+    tests/test_controller.cpp
+    tests/test_message.cpp
+    tests/test_validator.cpp
+
+    src/logic/ChatController.cpp
+    src/logic/ChatController.h
+    src/logic/ChatState.cpp
+    src/logic/ChatState.h
+    src/logic/InputValidator.cpp
+    src/logic/InputValidator.h
+    src/logic/Message.cpp
+    src/logic/Message.h
+
+    src/network/INetworkClient.h
+    src/network/MockNetworkClient.cpp
+    src/network/MockNetworkClient.h
+)
+
+target_include_directories(tests PRIVATE
+    src/logic
+    src/network
+)
+
+target_link_libraries(tests PRIVATE
+    Qt6::Core
+    Qt6::Network
+    Qt6::Test
+)
+
+add_test(NAME CampusConnectTests COMMAND tests)
