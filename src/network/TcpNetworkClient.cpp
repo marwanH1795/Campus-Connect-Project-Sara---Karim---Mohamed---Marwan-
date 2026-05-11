@@ -1,5 +1,6 @@
 #include "TcpNetworkClient.h"
 
+#include <QDataStream>
 #include <QDebug>
 #include <QString>
 
@@ -11,20 +12,12 @@ TcpNetworkClient::TcpNetworkClient() {
         processBuffer();
     });
 
-    QObject::connect(socket, &QTcpSocket::connected, [this]() {
-        qDebug() << "Connected to server";
-
-        for (const QString& msg : pendingMessages) {
-            QByteArray data = msg.toUtf8();
-            data.append('\n');
-            socket->write(data);
-        }
-
-        pendingMessages.clear();
+    QObject::connect(socket, &QTcpSocket::connected, []() {
+        qDebug() << "CONNECTED TO SERVER";
     });
 
     QObject::connect(socket, &QTcpSocket::disconnected, []() {
-        qDebug() << "Disconnected from server";
+        qDebug() << "DISCONNECTED FROM SERVER";
     });
 }
 
@@ -37,45 +30,111 @@ void TcpNetworkClient::setMessageHandler(std::function<void(const std::string&)>
     messageHandler = handler;
 }
 
-void TcpNetworkClient::connectToServer(const std::string& username) {
-    QString connectMessage =
-        QString("{\"type\":\"connect\",\"sender\":\"%1\",\"target\":\"\",\"groupId\":\"\",\"content\":\"\",\"timestamp\":\"\"}")
-            .arg(QString::fromStdString(username));
+void TcpNetworkClient::setBinaryHandler(std::function<void(const QByteArray&)> handler) {
+    binaryHandler = handler;
+}
 
-    pendingMessages.append(connectMessage);
+void TcpNetworkClient::connectToServer(const std::string& username) {
+    QObject::connect(socket, &QTcpSocket::connected, [this, username]() {
+        QString connectMessage =
+            QString("{\"type\":\"connect\",\"sender\":\"%1\",\"target\":\"\",\"groupId\":\"\",\"content\":\"\",\"timestamp\":\"\"}")
+                .arg(QString::fromStdString(username));
+
+        sendMessage(connectMessage.toStdString());
+    });
 
     socket->connectToHost("127.0.0.1", 12345);
 }
 
 void TcpNetworkClient::sendMessage(const std::string& message) {
-    QString qmsg = QString::fromStdString(message);
-
-    if (socket->state() == QAbstractSocket::ConnectedState) {
-        QByteArray data = qmsg.toUtf8();
-        data.append('\n');
-        socket->write(data);
-    } else {
-        pendingMessages.append(qmsg);
+    if (socket->state() != QAbstractSocket::ConnectedState) {
+        qDebug() << "Cannot send message: socket is not connected";
+        return;
     }
+
+    QByteArray payload = QByteArray::fromStdString(message);
+
+    QByteArray frame;
+    QDataStream stream(&frame, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::BigEndian);
+
+    stream << quint32(payload.size() + 1);
+    frame.append(char(0));
+    frame.append(payload);
+
+    socket->write(frame);
+    socket->flush();
+
+    qDebug() << "CLIENT SENT TEXT FRAME, size:" << payload.size();
+}
+
+void TcpNetworkClient::sendBinary(const QByteArray& data) {
+    if (socket->state() != QAbstractSocket::ConnectedState) {
+        qDebug() << "Cannot send binary: socket is not connected";
+        return;
+    }
+
+    QByteArray frame;
+    QDataStream stream(&frame, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::BigEndian);
+
+    stream << quint32(data.size() + 1);
+    frame.append(char(1));
+    frame.append(data);
+
+    socket->write(frame);
+    socket->flush();
+
+    qDebug() << "CLIENT SENT BINARY FRAME, size:" << data.size();
 }
 
 void TcpNetworkClient::processBuffer() {
     while (true) {
-        int index = buffer.indexOf('\n');
-
-        if (index == -1) {
-            break;
+        if (buffer.size() < 4) {
+            return;
         }
 
-        QByteArray line = buffer.left(index).trimmed();
-        buffer.remove(0, index + 1);
+        QDataStream stream(buffer);
+        stream.setByteOrder(QDataStream::BigEndian);
 
-        if (line.isEmpty()) {
+        quint32 frameSize;
+        stream >> frameSize;
+
+        if (frameSize == 0) {
+            buffer.remove(0, 4);
             continue;
         }
 
-        if (messageHandler) {
-            messageHandler(line.toStdString());
+        if (buffer.size() < int(4 + frameSize)) {
+            return;
+        }
+
+        QByteArray frame = buffer.mid(4, frameSize);
+        buffer.remove(0, 4 + frameSize);
+
+        if (frame.isEmpty()) {
+            continue;
+        }
+
+        char frameType = frame[0];
+        QByteArray payload = frame.mid(1);
+
+        if (frameType == 0) {
+            qDebug() << "CLIENT RECEIVED TEXT FRAME, size:" << payload.size();
+
+            if (messageHandler) {
+                messageHandler(payload.toStdString());
+            }
+        }
+        else if (frameType == 1) {
+            qDebug() << "CLIENT RECEIVED BINARY FRAME, size:" << payload.size();
+
+            if (binaryHandler) {
+                binaryHandler(payload);
+            }
+        }
+        else {
+            qDebug() << "CLIENT RECEIVED UNKNOWN FRAME TYPE:" << int(frameType);
         }
     }
 }

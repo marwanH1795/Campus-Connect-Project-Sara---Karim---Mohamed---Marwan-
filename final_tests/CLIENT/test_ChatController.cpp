@@ -25,7 +25,7 @@ TEST(ChatControllerTest, SendPublicMessageCallsSendMessage) {
     auto mock = std::make_shared<MockNetworkClient>();
     EXPECT_CALL(*mock, setMessageHandler(_));
     EXPECT_CALL(*mock, connectToServer(_));
-    EXPECT_CALL(*mock, sendMessage(_)).Times(1);
+    EXPECT_CALL(*mock, sendMessage(_)).Times(2);
 
     ChatController ctrl(mock);
     ctrl.connectUser("alice");

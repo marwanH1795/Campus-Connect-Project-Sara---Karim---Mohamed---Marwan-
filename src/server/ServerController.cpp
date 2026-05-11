@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 
 ServerController::ServerController() {
     loadPublicHistory();
@@ -71,8 +72,39 @@ void ServerController::removeClient(std::shared_ptr<ClientSession> client) {
     }
 }
 
+std::string ServerController::extractFileIdFromAttachmentStart(const std::string& content) const {
+    std::size_t pos = content.find('|');
+
+    if (pos == std::string::npos) {
+        return "";
+    }
+
+    return content.substr(0, pos);
+}
+
+std::string ServerController::extractFileIdFromBinaryPacket(const char* data,
+                                                            std::size_t size) const {
+    if (size < 2) {
+        return "";
+    }
+
+    unsigned char b0 = static_cast<unsigned char>(data[0]);
+    unsigned char b1 = static_cast<unsigned char>(data[1]);
+
+    std::uint16_t idSize =
+        static_cast<std::uint16_t>((b0 << 8) | b1);
+
+    if (idSize == 0 || size < 2 + idSize) {
+        return "";
+    }
+
+    return std::string(data + 2, data + 2 + idSize);
+}
+
 void ServerController::handleMessage(const std::string& raw,
                                      std::shared_ptr<ClientSession> sender) {
+    std::cout << "SERVER RECEIVED TEXT, size: " << raw.size() << std::endl;
+
     Message msg = Message::fromJson(raw);
 
     switch (msg.getType()) {
@@ -136,8 +168,104 @@ void ServerController::handleMessage(const std::string& raw,
         sendToGroup(msg.getGroupId(), raw);
         break;
 
-    default:
+    case MessageType::AttachmentStart: {
+        std::string fileId = extractFileIdFromAttachmentStart(msg.getContent());
+
+        if (!fileId.empty()) {
+            AttachmentRoute route;
+            route.sender = msg.getSender();
+            route.target = msg.getTarget();
+            route.groupId = msg.getGroupId();
+
+            activeAttachmentRoutes[fileId] = route;
+        }
+
+        if (!msg.getTarget().empty()) {
+            if (users.count(msg.getTarget())) {
+                users[msg.getTarget()]->send(raw);
+            }
+
+            sender->send(raw);
+        }
+        else if (!msg.getGroupId().empty()) {
+            sendToGroup(msg.getGroupId(), raw);
+        }
+        else {
+            broadcast(raw);
+        }
+
         break;
+    }
+
+    case MessageType::AttachmentEnd: {
+        if (!msg.getTarget().empty()) {
+            if (users.count(msg.getTarget())) {
+                users[msg.getTarget()]->send(raw);
+            }
+
+            sender->send(raw);
+        }
+        else if (!msg.getGroupId().empty()) {
+            sendToGroup(msg.getGroupId(), raw);
+        }
+        else {
+            broadcast(raw);
+        }
+
+        activeAttachmentRoutes.erase(msg.getContent());
+        break;
+    }
+
+    default:
+        std::cout << "SERVER WARNING: Unknown message type" << std::endl;
+        break;
+    }
+}
+
+void ServerController::handleBinary(const char* data,
+                                    std::size_t size,
+                                    std::shared_ptr<ClientSession>) {
+    std::string fileId = extractFileIdFromBinaryPacket(data, size);
+
+    if (fileId.empty()) {
+        std::cout << "SERVER WARNING: Binary packet without fileId" << std::endl;
+        return;
+    }
+
+    routeBinaryByFileId(fileId, data, size);
+}
+
+void ServerController::routeBinaryByFileId(const std::string& fileId,
+                                           const char* data,
+                                           std::size_t size) {
+    auto it = activeAttachmentRoutes.find(fileId);
+
+    if (it == activeAttachmentRoutes.end()) {
+        std::cout << "SERVER WARNING: Unknown attachment fileId: " << fileId << std::endl;
+        return;
+    }
+
+    const AttachmentRoute& route = it->second;
+
+    if (!route.target.empty()) {
+        if (users.count(route.target)) {
+            users[route.target]->sendBinary(data, size);
+        }
+
+        if (users.count(route.sender)) {
+            users[route.sender]->sendBinary(data, size);
+        }
+
+        return;
+    }
+
+    if (!route.groupId.empty()) {
+        sendBinaryToGroup(route.groupId, data, size);
+        return;
+    }
+
+    for (auto& client : clients) {
+        client->sendBinary(data, size);
     }
 }
 
@@ -155,6 +283,18 @@ void ServerController::sendToGroup(const std::string& groupId,
 
     for (auto& client : groups[groupId]) {
         client->send(msg);
+    }
+}
+
+void ServerController::sendBinaryToGroup(const std::string& groupId,
+                                         const char* data,
+                                         std::size_t size) {
+    if (!groups.count(groupId)) {
+        return;
+    }
+
+    for (auto& client : groups[groupId]) {
+        client->sendBinary(data, size);
     }
 }
 

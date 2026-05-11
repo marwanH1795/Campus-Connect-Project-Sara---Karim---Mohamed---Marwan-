@@ -2,17 +2,18 @@
 #define TCPNETWORKCLIENT_H
 
 #include "INetworkClient.h"
+
 #include <QTcpSocket>
 #include <QByteArray>
-#include <QStringList>
 #include <functional>
 
 class TcpNetworkClient : public INetworkClient {
 private:
     QTcpSocket* socket;
     std::function<void(const std::string&)> messageHandler;
+    std::function<void(const QByteArray&)> binaryHandler;
+
     QByteArray buffer;
-    QStringList pendingMessages;
 
     void processBuffer();
 
@@ -21,8 +22,12 @@ public:
     ~TcpNetworkClient();
 
     void connectToServer(const std::string& username) override;
+
     void sendMessage(const std::string& message) override;
+    void sendBinary(const QByteArray& data) override;
+
     void setMessageHandler(std::function<void(const std::string&)> handler) override;
+    void setBinaryHandler(std::function<void(const QByteArray&)> handler) override;
 };
 
 #endif

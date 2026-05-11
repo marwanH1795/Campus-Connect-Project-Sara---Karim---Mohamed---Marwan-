@@ -13,6 +13,8 @@ enum class MessageType {
     GroupMessage,
     Typing,
     UserList,
+    AttachmentStart,
+    AttachmentEnd,
     Error,
     History,
     AIRequest,
