@@ -2,12 +2,14 @@
 #include "Message.h"
 
 #include <QTime>
-#include <QByteArray>
-#include <QFile>
+#include <QDateTime>
+#include <QDataStream>
 #include <QFileInfo>
 #include <QDir>
 #include <QStandardPaths>
-#include <QString>
+#include <QStringList>
+#include <QDebug>
+
 #include <sstream>
 
 static std::string currentTimestamp() {
@@ -28,108 +30,15 @@ static std::vector<std::string> splitUsers(const std::string& text) {
     return users;
 }
 
-static bool isVoicePayload(const std::string& content) {
-    return content.rfind("VOICE_DATA|", 0) == 0;
-}
-
-static QString saveIncomingVoiceFile(const std::string& payload) {
-    QString text = QString::fromStdString(payload);
-
-    QString prefix = "VOICE_DATA|";
-
-    if (!text.startsWith(prefix)) {
-        return "";
-    }
-
-    QString rest = text.mid(prefix.length());
-    int separatorIndex = rest.indexOf('|');
-
-    if (separatorIndex <= 0) {
-        return "";
-    }
-
-    QString fileName = rest.left(separatorIndex);
-    QString base64Audio = rest.mid(separatorIndex + 1);
-
-    QByteArray audioData = QByteArray::fromBase64(base64Audio.toLatin1());
-
-    QString baseDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-
-    if (baseDir.isEmpty()) {
-        baseDir = QDir::homePath() + "/CampusConnectData";
-    }
-
-    QDir dir(baseDir + "/received_voice");
-
-    if (!dir.exists()) {
-        dir.mkpath(".");
-    }
-
-    QString safeFileName = QFileInfo(fileName).fileName();
-    QString outputPath = dir.absoluteFilePath(safeFileName);
-
-    int counter = 1;
-    QFileInfo info(outputPath);
-
-    while (QFileInfo::exists(outputPath)) {
-        QString baseName = info.completeBaseName();
-        QString suffix = info.suffix();
-
-        outputPath = dir.absoluteFilePath(
-            baseName + "_" + QString::number(counter) + "." + suffix
-        );
-
-        counter++;
-    }
-
-    QFile out(outputPath);
-
-    if (!out.open(QIODevice::WriteOnly)) {
-        return "";
-    }
-
-    out.write(audioData);
-    out.close();
-
-    return outputPath;
-}
-
-static Message convertVoicePayloadIfNeeded(const Message& original) {
-    if (!isVoicePayload(original.getContent())) {
-        return original;
-    }
-
-    QString savedPath = saveIncomingVoiceFile(original.getContent());
-
-    if (savedPath.isEmpty()) {
-        Message failed = original;
-        failed.setContent("🎤 Voice message could not be saved");
-        return failed;
-    }
-
-    QString text = QString::fromStdString(original.getContent());
-    QString rest = text.mid(QString("VOICE_DATA|").length());
-    int separatorIndex = rest.indexOf('|');
-
-    QString fileName = "voice message";
-
-    if (separatorIndex > 0) {
-        fileName = rest.left(separatorIndex);
-    }
-
-    Message converted = original;
-    converted.setContent(
-        ("VOICE_FILE|" + fileName + "|" + savedPath).toStdString()
-    );
-
-    return converted;
-}
-
 ChatController::ChatController(std::shared_ptr<INetworkClient> net)
     : network(net)
 {
     network->setMessageHandler([this](const std::string& json) {
         handleIncomingMessage(json);
+    });
+
+    network->setBinaryHandler([this](const QByteArray& data) {
+        handleIncomingBinary(data);
     });
 }
 
@@ -251,7 +160,8 @@ bool ChatController::sendTypingStatus(bool isTyping) {
     return true;
 }
 
-bool ChatController::sendPrivateTypingStatus(const std::string& target, bool isTyping) {
+bool ChatController::sendPrivateTypingStatus(const std::string& target,
+                                             bool isTyping) {
     if (state.getCurrentUser().empty() || target.empty()) {
         return false;
     }
@@ -284,18 +194,269 @@ bool ChatController::sendGroupTypingStatus(const std::string& groupId,
     return true;
 }
 
+bool ChatController::sendPublicAttachment(const QString& filePath,
+                                          const QString& fileType) {
+    return sendAttachmentFile(filePath, fileType, "", "");
+}
+
+bool ChatController::sendPrivateAttachment(const std::string& target,
+                                           const QString& filePath,
+                                           const QString& fileType) {
+    if (target.empty()) {
+        return false;
+    }
+
+    return sendAttachmentFile(filePath, fileType, target, "");
+}
+
+bool ChatController::sendGroupAttachment(const std::string& groupId,
+                                         const QString& filePath,
+                                         const QString& fileType) {
+    if (groupId.empty()) {
+        return false;
+    }
+
+    if (!state.isInGroup(groupId)) {
+        return false;
+    }
+
+    return sendAttachmentFile(filePath, fileType, "", groupId);
+}
+
+bool ChatController::sendAttachmentFile(const QString& filePath,
+                                        const QString& fileType,
+                                        const std::string& target,
+                                        const std::string& groupId) {
+    QFileInfo info(filePath);
+
+    if (!info.exists() || info.size() <= 0) {
+        return false;
+    }
+
+    QFile file(filePath);
+
+    if (!file.open(QIODevice::ReadOnly)) {
+        return false;
+    }
+
+    QString fileId =
+        QString::fromStdString(state.getCurrentUser()) +
+        "_" +
+        QString::number(QDateTime::currentMSecsSinceEpoch());
+
+    QString meta =
+        fileId + "|" +
+        info.fileName() + "|" +
+        fileType + "|" +
+        QString::number(info.size());
+
+    Message startMsg(MessageType::AttachmentStart,
+                     state.getCurrentUser(),
+                     target,
+                     groupId,
+                     meta.toStdString(),
+                     currentTimestamp());
+
+    network->sendMessage(startMsg.toJson());
+
+    const qint64 chunkSize = 32 * 1024;
+
+    while (!file.atEnd()) {
+        QByteArray chunk = file.read(chunkSize);
+
+        QByteArray packet;
+        QDataStream stream(&packet, QIODevice::WriteOnly);
+        stream.setByteOrder(QDataStream::BigEndian);
+
+        QByteArray idBytes = fileId.toUtf8();
+
+        stream << quint16(idBytes.size());
+        packet.append(idBytes);
+        packet.append(chunk);
+
+        network->sendBinary(packet);
+    }
+
+    file.close();
+
+    Message endMsg(MessageType::AttachmentEnd,
+                   state.getCurrentUser(),
+                   target,
+                   groupId,
+                   fileId.toStdString(),
+                   currentTimestamp());
+
+    network->sendMessage(endMsg.toJson());
+
+    return true;
+}
+
+QString ChatController::createUniqueReceivedFilePath(const QString& fileName) const {
+    QString baseDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+
+    if (baseDir.isEmpty()) {
+        baseDir = QDir::homePath() + "/CampusConnectData";
+    }
+
+    QDir dir(baseDir + "/received_attachments");
+
+    if (!dir.exists()) {
+        dir.mkpath(".");
+    }
+
+    QString safeFileName = QFileInfo(fileName).fileName();
+    QString outputPath = dir.absoluteFilePath(safeFileName);
+
+    QFileInfo info(outputPath);
+    int counter = 1;
+
+    while (QFileInfo::exists(outputPath)) {
+        QString suffix = info.suffix();
+        QString baseName = info.completeBaseName();
+
+        if (suffix.isEmpty()) {
+            outputPath = dir.absoluteFilePath(baseName + "_" + QString::number(counter));
+        } else {
+            outputPath = dir.absoluteFilePath(
+                baseName + "_" + QString::number(counter) + "." + suffix
+            );
+        }
+
+        counter++;
+    }
+
+    return outputPath;
+}
+
+void ChatController::handleIncomingBinary(const QByteArray& data) {
+    if (data.size() < 2) {
+        return;
+    }
+
+    QDataStream stream(data);
+    stream.setByteOrder(QDataStream::BigEndian);
+
+    quint16 idSize = 0;
+    stream >> idSize;
+
+    if (idSize == 0 || data.size() < 2 + idSize) {
+        return;
+    }
+
+    QByteArray idBytes = data.mid(2, idSize);
+    QString fileId = QString::fromUtf8(idBytes);
+
+    QByteArray chunk = data.mid(2 + idSize);
+
+    auto it = incomingAttachments.find(fileId.toStdString());
+
+    if (it == incomingAttachments.end()) {
+        qDebug() << "Received binary chunk for unknown fileId:" << fileId;
+        return;
+    }
+
+    if (it->second.file && it->second.file->isOpen()) {
+        it->second.file->write(chunk);
+    }
+}
+
+void ChatController::finishIncomingAttachment(const Message& msg) {
+    QString fileId = QString::fromStdString(msg.getContent());
+
+    auto it = incomingAttachments.find(fileId.toStdString());
+
+    if (it == incomingAttachments.end()) {
+        return;
+    }
+
+    IncomingAttachment attachment = it->second;
+
+    if (attachment.file && attachment.file->isOpen()) {
+        attachment.file->flush();
+        attachment.file->close();
+    }
+
+    incomingAttachments.erase(it);
+
+    QString renderedContent;
+
+    if (attachment.fileType.startsWith("audio")) {
+        renderedContent =
+            "VOICE_FILE|" +
+            attachment.fileName +
+            "|" +
+            attachment.filePath;
+    }
+    else if (attachment.fileType.startsWith("image")) {
+        renderedContent =
+            "IMAGE_FILE|" +
+            attachment.fileName +
+            "|" +
+            attachment.filePath;
+    }
+    else if (attachment.fileType.startsWith("video")) {
+        renderedContent =
+            "VIDEO_FILE|" +
+            attachment.fileName +
+            "|" +
+            attachment.filePath;
+    }
+    else {
+        renderedContent =
+            "FILE_ATTACHMENT|" +
+            attachment.fileName +
+            "|" +
+            attachment.filePath;
+    }
+
+    Message displayed;
+
+    if (!attachment.groupId.empty()) {
+        displayed = Message(MessageType::GroupMessage,
+                            attachment.sender,
+                            "",
+                            attachment.groupId,
+                            renderedContent.toStdString(),
+                            currentTimestamp());
+
+        state.setGroupUserTyping(attachment.groupId, attachment.sender, false);
+
+        if (state.isInGroup(attachment.groupId)) {
+            state.addGroupMessage(displayed);
+        }
+    }
+    else if (!attachment.target.empty()) {
+        displayed = Message(MessageType::PrivateMessage,
+                            attachment.sender,
+                            attachment.target,
+                            "",
+                            renderedContent.toStdString(),
+                            currentTimestamp());
+
+        state.setPrivateUserTyping(attachment.sender, false);
+        state.addPrivateMessage(displayed);
+    }
+    else {
+        displayed = Message(MessageType::PublicMessage,
+                            attachment.sender,
+                            "",
+                            "",
+                            renderedContent.toStdString(),
+                            currentTimestamp());
+
+        state.setPublicUserTyping(attachment.sender, false);
+        state.addPublicMessage(displayed);
+    }
+}
+
 void ChatController::handleIncomingMessage(const std::string& json) {
     Message msg = Message::fromJson(json);
 
     if (msg.getType() == MessageType::PublicMessage) {
-        msg = convertVoicePayloadIfNeeded(msg);
-
         state.setPublicUserTyping(msg.getSender(), false);
         state.addPublicMessage(msg);
     }
     else if (msg.getType() == MessageType::PrivateMessage) {
-        msg = convertVoicePayloadIfNeeded(msg);
-
         state.setPrivateUserTyping(msg.getSender(), false);
         state.addPrivateMessage(msg);
     }
@@ -304,8 +465,6 @@ void ChatController::handleIncomingMessage(const std::string& json) {
         state.joinGroup(msg.getGroupId());
     }
     else if (msg.getType() == MessageType::GroupMessage) {
-        msg = convertVoicePayloadIfNeeded(msg);
-
         state.setGroupUserTyping(msg.getGroupId(), msg.getSender(), false);
 
         if (state.isInGroup(msg.getGroupId())) {
@@ -327,6 +486,41 @@ void ChatController::handleIncomingMessage(const std::string& json) {
     }
     else if (msg.getType() == MessageType::UserList) {
         state.setOnlineUsers(splitUsers(msg.getContent()));
+    }
+    else if (msg.getType() == MessageType::AttachmentStart) {
+        QString content = QString::fromStdString(msg.getContent());
+        QStringList parts = content.split("|");
+
+        if (parts.size() < 4) {
+            return;
+        }
+
+        QString fileId = parts[0];
+        QString fileName = parts[1];
+        QString fileType = parts[2];
+
+        QString outputPath = createUniqueReceivedFilePath(fileName);
+
+        std::shared_ptr<QFile> file = std::make_shared<QFile>(outputPath);
+
+        if (!file->open(QIODevice::WriteOnly)) {
+            return;
+        }
+
+        IncomingAttachment attachment;
+        attachment.fileId = fileId;
+        attachment.fileName = fileName;
+        attachment.fileType = fileType;
+        attachment.filePath = outputPath;
+        attachment.sender = msg.getSender();
+        attachment.target = msg.getTarget();
+        attachment.groupId = msg.getGroupId();
+        attachment.file = file;
+
+        incomingAttachments[fileId.toStdString()] = attachment;
+    }
+    else if (msg.getType() == MessageType::AttachmentEnd) {
+        finishIncomingAttachment(msg);
     }
 }
 

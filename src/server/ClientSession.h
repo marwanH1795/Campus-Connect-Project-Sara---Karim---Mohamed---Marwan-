@@ -5,6 +5,8 @@
 #include <array>
 #include <memory>
 #include <string>
+#include <vector>
+#include <cstdint>
 
 using boost::asio::ip::tcp;
 
@@ -15,18 +17,25 @@ private:
     tcp::socket socket;
     std::shared_ptr<ServerController> controller;
 
-    std::array<char, 1024> readBuffer;
-    std::string pendingText;
+    std::array<char, 4> headerBuffer;
+    std::vector<char> payloadBuffer;
+
     std::string username;
 
-    void read();
+    void readHeader();
+    void readPayload(std::uint32_t payloadSize);
+
+    static std::uint32_t decodeBigEndianLength(const std::array<char, 4>& buffer);
+    static std::array<char, 4> encodeBigEndianLength(std::uint32_t value);
 
 public:
     ClientSession(tcp::socket socket,
                   std::shared_ptr<ServerController> controller);
 
     void start();
+
     void send(const std::string& msg);
+    void sendBinary(const char* data, std::size_t size);
 
     void setUsername(const std::string& newUsername);
     std::string getUsername() const;

@@ -9,7 +9,14 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Core Network Gui Multimedia)
+find_package(Qt6 REQUIRED COMPONENTS
+    Widgets
+    Core
+    Network
+    Gui
+    Multimedia
+    MultimediaWidgets
+)
 
 add_executable(app
     src/main.cpp
@@ -47,6 +54,8 @@ add_executable(app
     src/network/INetworkClient.h
     src/network/TcpNetworkClient.cpp
     src/network/TcpNetworkClient.h
+    src/network/MockNetworkClient.cpp
+    src/network/MockNetworkClient.h
 )
 
 target_include_directories(app PRIVATE
@@ -61,6 +70,7 @@ target_link_libraries(app PRIVATE
     Qt6::Network
     Qt6::Gui
     Qt6::Multimedia
+    Qt6::MultimediaWidgets
 )
 
 add_executable(server
@@ -82,10 +92,6 @@ add_executable(server
     src/logic/Message.h
 )
 
-set_target_properties(server PROPERTIES
-    LINKER_LANGUAGE CXX
-)
-
 target_include_directories(server PRIVATE
     src/server
     src/logic
@@ -94,7 +100,8 @@ target_include_directories(server PRIVATE
 
 target_link_libraries(server PRIVATE
     Qt6::Core
-    stdc++
+    Qt6::Network
+    Qt6::Gui
     ws2_32
     mswsock
 )

@@ -55,6 +55,8 @@ std::string Message::messageTypeToString(MessageType type) {
         case MessageType::GroupMessage: return "group_message";
         case MessageType::Typing: return "typing";
         case MessageType::UserList: return "user_list";
+        case MessageType::AttachmentStart: return "attachment_start";
+        case MessageType::AttachmentEnd: return "attachment_end";
         case MessageType::Error: return "error";
         case MessageType::History: return "history";
         case MessageType::AIRequest: return "ai_request";
@@ -73,6 +75,8 @@ MessageType Message::stringToMessageType(const std::string& typeString) {
     if (typeString == "group_message") return MessageType::GroupMessage;
     if (typeString == "typing") return MessageType::Typing;
     if (typeString == "user_list") return MessageType::UserList;
+    if (typeString == "attachment_start") return MessageType::AttachmentStart;
+    if (typeString == "attachment_end") return MessageType::AttachmentEnd;
     if (typeString == "error") return MessageType::Error;
     if (typeString == "history") return MessageType::History;
     if (typeString == "ai_request") return MessageType::AIRequest;
