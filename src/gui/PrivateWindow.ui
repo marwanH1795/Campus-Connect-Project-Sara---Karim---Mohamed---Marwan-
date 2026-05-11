@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PrivateWindow</class>
+ <widget class="QDialog" name="PrivateWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>760</width>
+    <height>520</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Private Chat</string>
+  </property>
+  <property name="styleSheet">
+   <string>
+QDialog#PrivateWindow {
+    background-color: #1e1f2e;
+    color: #e0e0f0;
+    font-family: "Segoe UI", Arial, sans-serif;
+}
+
+QTextEdit#privateDisplay {
+    background-color: #16172a;
+    color: #dcdcf0;
+    border: 2px solid #3a3b55;
+    border-radius: 12px;
+    padding: 10px;
+    font-size: 13px;
+}
+
+QFrame#inputBar {
+    background-color: #151525;
+    border: 2px solid #3a3b55;
+    border-radius: 22px;
+}
+
+QLineEdit#messageInput {
+    background-color: #2a2b3d;
+    color: #e0e0f0;
+    border: 2px solid #4a4b6a;
+    border-radius: 22px;
+    padding: 0px 16px;
+    font-size: 13px;
+}
+
+QLineEdit#messageInput:focus {
+    border: 2px solid #7c6af7;
+}
+
+QPushButton#sendButton {
+    background-color: #3ecf8e;
+    color: #101426;
+    border: none;
+    border-radius: 23px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+QPushButton#sendButton:hover {
+    background-color: #55e0a3;
+}
+   </string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <property name="spacing">
+    <number>14</number>
+   </property>
+   <property name="leftMargin">
+    <number>20</number>
+   </property>
+   <property name="topMargin">
+    <number>20</number>
+   </property>
+   <property name="rightMargin">
+    <number>20</number>
+   </property>
+   <property name="bottomMargin">
+    <number>20</number>
+   </property>
+   <item>
+    <widget class="QTextEdit" name="privateDisplay">
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+     <property name="html">
+      <string>&lt;html&gt;&lt;body&gt;&lt;p style="color:#9a9ac0; font-style:italic;"&gt;Private messages will appear here...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="inputBar">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>66</height>
+      </size>
+     </property>
+     <layout class="QHBoxLayout" name="inputLayout">
+      <property name="leftMargin">
+       <number>12</number>
+      </property>
+      <property name="topMargin">
+       <number>8</number>
+      </property>
+      <property name="rightMargin">
+       <number>12</number>
+      </property>
+      <property name="bottomMargin">
+       <number>8</number>
+      </property>
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <item>
+       <widget class="QLineEdit" name="messageInput">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>44</height>
+         </size>
+        </property>
+        <property name="placeholderText">
+         <string>Type a message...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="sendButton">
+        <property name="minimumSize">
+         <size>
+          <width>105</width>
+          <height>46</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>115</width>
+          <height>46</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Send  ➤</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

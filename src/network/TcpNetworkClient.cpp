@@ -19,6 +19,7 @@ TcpNetworkClient::TcpNetworkClient() {
             data.append('\n');
             socket->write(data);
         }
+
         pendingMessages.clear();
     });
 
@@ -37,7 +38,12 @@ void TcpNetworkClient::setMessageHandler(std::function<void(const std::string&)>
 }
 
 void TcpNetworkClient::connectToServer(const std::string& username) {
-    Q_UNUSED(username);
+    QString connectMessage =
+        QString("{\"type\":\"connect\",\"sender\":\"%1\",\"target\":\"\",\"groupId\":\"\",\"content\":\"\",\"timestamp\":\"\"}")
+            .arg(QString::fromStdString(username));
+
+    pendingMessages.append(connectMessage);
+
     socket->connectToHost("127.0.0.1", 12345);
 }
 
@@ -56,14 +62,17 @@ void TcpNetworkClient::sendMessage(const std::string& message) {
 void TcpNetworkClient::processBuffer() {
     while (true) {
         int index = buffer.indexOf('\n');
-        if (index == -1)
+
+        if (index == -1) {
             break;
+        }
 
         QByteArray line = buffer.left(index).trimmed();
         buffer.remove(0, index + 1);
 
-        if (line.isEmpty())
+        if (line.isEmpty()) {
             continue;
+        }
 
         if (messageHandler) {
             messageHandler(line.toStdString());

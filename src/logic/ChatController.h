@@ -2,6 +2,8 @@
 #define CHATCONTROLLER_H
 
 #include <memory>
+#include <string>
+
 #include "ChatState.h"
 #include "InputValidator.h"
 #include "../network/INetworkClient.h"
@@ -17,13 +19,20 @@ public:
     ChatController(std::shared_ptr<INetworkClient> net);
 
     bool connectUser(const std::string& username);
+
     bool sendPublicMessage(const std::string& content);
+    bool sendPrivateMessage(const std::string& target, const std::string& content);
 
     bool createGroup(const std::string& groupId);
     bool joinGroup(const std::string& groupId);
     bool sendGroupMessage(const std::string& groupId, const std::string& content);
 
+    bool sendTypingStatus(bool isTyping);
+    bool sendPrivateTypingStatus(const std::string& target, bool isTyping);
+    bool sendGroupTypingStatus(const std::string& groupId, bool isTyping);
+
     ChatState& getState();
+    std::string getCurrentUsername() const;
 };
 
 #endif
