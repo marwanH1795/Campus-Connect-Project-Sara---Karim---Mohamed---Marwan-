@@ -1,25 +1,34 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(CampusConnect LANGUAGES CXX)
+project(CampusConnect VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
-
-enable_testing()
+set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS
-    Widgets
     Core
+    Widgets
     Network
-    Gui
     Multimedia
     MultimediaWidgets
-    Test
 )
+
+find_package(GTest REQUIRED)
+
+find_path(BOOST_ASIO_INCLUDE_DIR
+    NAMES boost/asio.hpp
+    PATHS
+        C:/msys64/ucrt64/include
+        C:/msys64/mingw64/include
+)
+
+if(NOT BOOST_ASIO_INCLUDE_DIR)
+    message(FATAL_ERROR "Boost.Asio headers were not found. Install Boost or set BOOST_ASIO_INCLUDE_DIR.")
+endif()
 
 add_executable(app
     src/main.cpp
@@ -43,35 +52,30 @@ add_executable(app
     src/gui/MessageRenderer.cpp
     src/gui/MessageRenderer.h
 
-    src/gui/resources.qrc
-
     src/logic/ChatController.cpp
     src/logic/ChatController.h
+
     src/logic/ChatState.cpp
     src/logic/ChatState.h
+
     src/logic/InputValidator.cpp
     src/logic/InputValidator.h
+
     src/logic/Message.cpp
     src/logic/Message.h
 
     src/network/INetworkClient.h
+
     src/network/TcpNetworkClient.cpp
     src/network/TcpNetworkClient.h
-    src/network/MockNetworkClient.cpp
-    src/network/MockNetworkClient.h
-)
 
-target_include_directories(app PRIVATE
-    src/gui
-    src/logic
-    src/network
+    src/gui/resources.qrc
 )
 
 target_link_libraries(app PRIVATE
-    Qt6::Widgets
     Qt6::Core
+    Qt6::Widgets
     Qt6::Network
-    Qt6::Gui
     Qt6::Multimedia
     Qt6::MultimediaWidgets
 )
@@ -95,49 +99,84 @@ add_executable(server
     src/logic/Message.h
 )
 
-target_include_directories(server PRIVATE
-    src/server
-    src/logic
-    C:/msys64/ucrt64/include
-)
-
 target_link_libraries(server PRIVATE
     Qt6::Core
     Qt6::Network
-    Qt6::Gui
-    ws2_32
-    mswsock
 )
 
-add_executable(tests
-    tests/test_chatstate.cpp
-    tests/test_controller.cpp
-    tests/test_message.cpp
-    tests/test_validator.cpp
+target_include_directories(server PRIVATE
+    ${BOOST_ASIO_INCLUDE_DIR}
+)
+
+if(WIN32)
+    target_link_libraries(server PRIVATE
+        ws2_32
+        mswsock
+    )
+endif()
+
+add_executable(final_tests_client
+    final_tests/CLIENT/test_ChatController.cpp
 
     src/logic/ChatController.cpp
     src/logic/ChatController.h
+
     src/logic/ChatState.cpp
     src/logic/ChatState.h
+
     src/logic/InputValidator.cpp
     src/logic/InputValidator.h
+
     src/logic/Message.cpp
     src/logic/Message.h
-
-    src/network/INetworkClient.h
-    src/network/MockNetworkClient.cpp
-    src/network/MockNetworkClient.h
 )
 
-target_include_directories(tests PRIVATE
+target_include_directories(final_tests_client PRIVATE
     src/logic
     src/network
+    final_tests/CLIENT
 )
 
-target_link_libraries(tests PRIVATE
+target_link_libraries(final_tests_client PRIVATE
     Qt6::Core
     Qt6::Network
-    Qt6::Test
+
+    GTest::gtest
+    GTest::gtest_main
+
+    GTest::gmock
+    GTest::gmock_main
 )
 
-add_test(NAME CampusConnectTests COMMAND tests)
+add_executable(final_tests_server
+    final_tests/SERVER/test_ChatState.cpp
+
+    src/logic/ChatState.cpp
+    src/logic/ChatState.h
+
+    src/logic/Message.cpp
+    src/logic/Message.h
+)
+
+target_include_directories(final_tests_server PRIVATE
+    final_tests/SERVER
+)
+
+target_link_libraries(final_tests_server PRIVATE
+    Qt6::Core
+
+    GTest::gtest
+    GTest::gtest_main
+)
+
+enable_testing()
+
+add_test(NAME FinalClientTests COMMAND final_tests_client)
+add_test(NAME FinalServerTests COMMAND final_tests_server)
+
+if(WIN32)
+    set_tests_properties(FinalClientTests FinalServerTests PROPERTIES
+        ENVIRONMENT_MODIFICATION
+            "PATH=path_list_prepend:C:\\Qt\\Tools\\mingw1310_64\\bin;PATH=path_list_prepend:C:\\Qt\\6.10.2\\mingw_64\\bin;PATH=path_list_prepend:C:\\msys64\\mingw64\\bin;PATH=path_list_prepend:C:\\msys64\\ucrt64\\bin"
+    )
+endif()
