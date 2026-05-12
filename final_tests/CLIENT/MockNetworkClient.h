@@ -9,7 +9,7 @@
 
 class MockNetworkClient : public INetworkClient {
 public:
-    MOCK_METHOD(void, connectToServer,
+    MOCK_METHOD(bool, connectToServer,
                 (const std::string& username, const std::string& host, unsigned short port),
                 (override));
 

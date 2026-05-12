@@ -32,6 +32,9 @@ void LoginWindow::onConnectClicked() {
 
         this->close();
     } else {
-        ui->statusLabel->setText("Invalid username");
+        ui->statusLabel->setText(
+            "Could not connect.\n"
+            "Start server.exe and use the server PC IP."
+        );
     }
 }

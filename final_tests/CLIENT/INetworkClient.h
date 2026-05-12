@@ -10,7 +10,7 @@ public:
     virtual ~INetworkClient() = default;
 
     // connect user
-    virtual void connectToServer(const std::string& username,
+    virtual bool connectToServer(const std::string& username,
                                  const std::string& host,
                                  unsigned short port) = 0;
 

@@ -57,8 +57,11 @@ bool ChatController::connectUser(const std::string& username,
         return false;
     }
 
+    if (!network->connectToServer(username, host, port)) {
+        return false;
+    }
+
     state.setCurrentUser(username);
-    network->connectToServer(username, host, port);
     return true;
 }
 

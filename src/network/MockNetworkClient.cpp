@@ -6,7 +6,7 @@ void MockNetworkClient::setMessageHandler(std::function<void(const std::string&)
 }
 
 // simulate connection
-void MockNetworkClient::connectToServer(const std::string& username,
+bool MockNetworkClient::connectToServer(const std::string& username,
                                         const std::string& host,
                                         unsigned short port) {
     (void)host;
@@ -22,6 +22,8 @@ void MockNetworkClient::connectToServer(const std::string& username,
 
         messageHandler(response);
     }
+
+    return true;
 }
 
 // simulate sending message

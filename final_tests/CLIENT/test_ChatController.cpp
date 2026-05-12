@@ -4,6 +4,7 @@
 #include "MockNetworkClient.h"
 
 using ::testing::_;
+using ::testing::Return;
 using ::testing::SaveArg;
 TEST(ChatControllerTest, RejectsEmptyUsername) {
     auto mock = std::make_shared<MockNetworkClient>();
@@ -16,7 +17,9 @@ TEST(ChatControllerTest, RejectsEmptyUsername) {
 TEST(ChatControllerTest, ValidUsernameCallsConnect) {
     auto mock = std::make_shared<MockNetworkClient>();
     EXPECT_CALL(*mock, setMessageHandler(_));
-    EXPECT_CALL(*mock, connectToServer("alice", "127.0.0.1", 12345)).Times(1);
+    EXPECT_CALL(*mock, connectToServer("alice", "127.0.0.1", 12345))
+        .Times(1)
+        .WillOnce(Return(true));
 
     ChatController ctrl(mock);
     EXPECT_TRUE(ctrl.connectUser("alice"));
@@ -24,7 +27,7 @@ TEST(ChatControllerTest, ValidUsernameCallsConnect) {
 TEST(ChatControllerTest, SendPublicMessageCallsSendMessage) {
     auto mock = std::make_shared<MockNetworkClient>();
     EXPECT_CALL(*mock, setMessageHandler(_));
-    EXPECT_CALL(*mock, connectToServer(_, _, _));
+    EXPECT_CALL(*mock, connectToServer(_, _, _)).WillOnce(Return(true));
     EXPECT_CALL(*mock, sendMessage(_)).Times(2);
 
     ChatController ctrl(mock);

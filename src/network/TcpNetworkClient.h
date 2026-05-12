@@ -21,7 +21,7 @@ public:
     TcpNetworkClient();
     ~TcpNetworkClient();
 
-    void connectToServer(const std::string& username,
+    bool connectToServer(const std::string& username,
                          const std::string& host,
                          unsigned short port) override;
 

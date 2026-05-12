@@ -24,17 +24,26 @@ cmake --build .
 
 ### Run
 
-Run the server first:
+Run the server first on one computer:
 
 ```bash
 ./server.exe
 ```
 
-Then run the app:
+Then run the app on each computer:
 
 ```bash
 ./app.exe
 ```
+
+For two teammates to chat from different computers, both apps must connect to the
+same server. On the computer running `server.exe`, find its local network IP
+address, for example `192.168.1.25`, then enter that IP in the app's server field
+on the other computer. `127.0.0.1` only connects to the current computer, so it
+works for local testing but not for a teammate on another device.
+
+If the app cannot connect, allow `server.exe` through Windows Firewall and keep
+port `12345` selected in the login screen.
 
 ## Features
 

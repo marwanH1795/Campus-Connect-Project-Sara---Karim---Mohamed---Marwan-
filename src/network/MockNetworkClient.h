@@ -9,7 +9,7 @@ private:
     std::function<void(const std::string&)> messageHandler;
 
 public:
-    void connectToServer(const std::string& username,
+    bool connectToServer(const std::string& username,
                          const std::string& host,
                          unsigned short port) override;
     void sendMessage(const std::string& message) override;

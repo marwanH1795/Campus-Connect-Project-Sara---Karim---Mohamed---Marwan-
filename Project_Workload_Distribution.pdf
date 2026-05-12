@@ -1,0 +1,107 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [ 4 0 R 6 0 R ] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 3816 >>
+stream
+BT /F1 24 Tf 72 780 Td (Project Workload Distribution) Tj ET
+BT /F1 13 Tf 72 750 Td (Campus Connect - Real-Time Client-Server Text Chat Application) Tj ET
+BT /F1 11 Tf 72 728 Td (Team Members: Marwan, Karim, Mohamed, Sara) Tj ET
+BT /F1 11 Tf 72 710 Td () Tj ET
+BT /F1 15 Tf 72 700 Td (Project Requirements Covered) Tj ET
+BT /F1 11 Tf 72 679 Td (The project implements a real-time client-server text chat application with a Qt) Tj ET
+BT /F1 11 Tf 72 664 Td (graphical client, a command-line Boost.Asio server, TCP socket networking, JSON) Tj ET
+BT /F1 11 Tf 72 649 Td (message serialization/deserialization, asynchronous I/O, separated) Tj ET
+BT /F1 11 Tf 72 634 Td (GUI/business/networking layers, and automated unit testing.) Tj ET
+BT /F1 11 Tf 72 619 Td () Tj ET
+BT /F1 15 Tf 72 609 Td (Marwan) Tj ET
+BT /F1 11 Tf 84 588 Td (- Networking requirement: Worked on client/server networking behavior and helped) Tj ET
+BT /F1 11 Tf 84 573 Td (connect the Qt client to the server using TCP sockets.) Tj ET
+BT /F1 11 Tf 84 558 Td (- Server-side requirement: Helped implement the Boost.Asio CLI server, including) Tj ET
+BT /F1 11 Tf 84 543 Td (asynchronous connection handling and multi-client communication.) Tj ET
+BT /F1 11 Tf 84 528 Td (- JSON communication requirement: Contributed to message routing and session) Tj ET
+BT /F1 11 Tf 84 513 Td (handling for structured JSON messages between clients and server.) Tj ET
+BT /F1 11 Tf 84 498 Td (- Bonus features: Implemented the bonus functionality, including multiple) Tj ET
+BT /F1 11 Tf 84 483 Td (users/private chats, chat groups, and media/attachment support.) Tj ET
+BT /F1 11 Tf 72 468 Td () Tj ET
+BT /F1 15 Tf 72 458 Td (Karim) Tj ET
+BT /F1 11 Tf 84 437 Td (- GUI requirement: Worked on Qt Designer integration and interface polishing for) Tj ET
+BT /F1 11 Tf 84 422 Td (the application screens.) Tj ET
+BT /F1 11 Tf 84 407 Td (- User interaction requirement: Helped improve the forms, buttons, and visible) Tj ET
+BT /F1 11 Tf 84 392 Td (user feedback used by the client application.) Tj ET
+BT /F1 11 Tf 84 377 Td (- Networking validation requirement: Helped validate communication between clients) Tj ET
+BT /F1 11 Tf 84 362 Td (and the server during testing.) Tj ET
+BT /F1 11 Tf 84 347 Td (- Integration requirement: Helped ensure the GUI worked smoothly with the) Tj ET
+BT /F1 11 Tf 84 332 Td (controller/business logic layer.) Tj ET
+BT /F1 11 Tf 72 317 Td () Tj ET
+BT /F1 15 Tf 72 307 Td (Mohamed) Tj ET
+BT /F1 11 Tf 84 286 Td (- GUI requirement: Worked on Qt Designer integration and interface polishing for) Tj ET
+BT /F1 11 Tf 84 271 Td (the client-side views.) Tj ET
+BT /F1 11 Tf 84 256 Td (- Testing requirement: Worked on integration testing and helped verify that) Tj ET
+BT /F1 11 Tf 84 241 Td (client/server communication behaved correctly.) Tj ET
+BT /F1 11 Tf 84 226 Td (- Final system integration requirement: Contributed to final system testing,) Tj ET
+BT /F1 11 Tf 84 211 Td (debugging, and checking that the app works as one complete system.) Tj ET
+BT /F1 11 Tf 84 196 Td (- Reliability requirement: Helped identify and debug issues that affected the) Tj ET
+BT /F1 11 Tf 84 181 Td (final demo flow.) Tj ET
+BT /F1 11 Tf 72 166 Td () Tj ET
+BT /F1 15 Tf 72 156 Td (Sara) Tj ET
+BT /F1 11 Tf 84 135 Td (- GUI requirement: Worked on Qt Designer integration and interface polishing for) Tj ET
+BT /F1 11 Tf 84 120 Td (the application screens.) Tj ET
+BT /F1 11 Tf 84 105 Td (- Networking validation requirement: Helped validate communication between) Tj ET
+BT /F1 11 Tf 84 90 Td (multiple clients and the server.) Tj ET
+BT /F1 11 Tf 84 75 Td (- Presentation/demo requirement: Worked on the presentation slides and helped) Tj ET
+BT /F1 11 Tf 84 60 Td (prepare the project explanation for the final discussion.) Tj ET
+
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 1417 >>
+stream
+BT /F1 11 Tf 84 780 Td (- Documentation requirement: Helped organize project material for the final) Tj ET
+BT /F1 11 Tf 84 765 Td (delivery.) Tj ET
+BT /F1 11 Tf 72 750 Td () Tj ET
+BT /F1 15 Tf 72 740 Td (Bonus Features Implemented by Marwan) Tj ET
+BT /F1 11 Tf 84 719 Td (- Multiple users and private chats: Marwan implemented the bonus functionality for) Tj ET
+BT /F1 11 Tf 84 704 Td (multiple connected users, displaying online users, and allowing private chat with) Tj ET
+BT /F1 11 Tf 84 689 Td (another user.) Tj ET
+BT /F1 11 Tf 84 674 Td (- Chat groups: Marwan implemented the bonus functionality for creating/joining) Tj ET
+BT /F1 11 Tf 84 659 Td (groups and sending group messages.) Tj ET
+BT /F1 11 Tf 84 644 Td (- Media and attachments: Marwan implemented extra media and attachment) Tj ET
+BT /F1 11 Tf 84 629 Td (functionality, which strengthens the final product beyond a basic text-only chat.) Tj ET
+BT /F1 11 Tf 72 614 Td () Tj ET
+BT /F1 15 Tf 72 604 Td (Summary) Tj ET
+BT /F1 11 Tf 72 583 Td (Overall, the team contributed to the required GUI, networking, JSON protocol, server) Tj ET
+BT /F1 11 Tf 72 568 Td (implementation, separation of concerns, testing, integration, and final presentation.) Tj ET
+BT /F1 11 Tf 72 553 Td (Marwan also implemented the bonus-level features: multiple users/private chats, chat) Tj ET
+BT /F1 11 Tf 72 538 Td (groups, and media/attachment support.) Tj ET
+
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000010 00000 n 
+0000000062 00000 n 
+0000000130 00000 n 
+0000000203 00000 n 
+0000000332 00000 n 
+0000004203 00000 n 
+0000004332 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+5804
+%%EOF
