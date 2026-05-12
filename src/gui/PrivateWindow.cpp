@@ -10,6 +10,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QFrame>
+#include <QLayout>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFileDialog>
@@ -176,13 +177,35 @@ void PrivateWindow::rebuildLayout()
         "}"
     );
 
+    QLayout* oldLayout = layout();
+
+    if (oldLayout) {
+        while (oldLayout->count()) {
+            QLayoutItem* item = oldLayout->takeAt(0);
+            delete item;
+        }
+
+        delete oldLayout;
+    }
+
+    QLayout* oldInputLayout = ui->inputBar->layout();
+
+    if (oldInputLayout) {
+        while (oldInputLayout->count()) {
+            QLayoutItem* item = oldInputLayout->takeAt(0);
+            delete item;
+        }
+
+        delete oldInputLayout;
+    }
+
     QVBoxLayout* root = new QVBoxLayout(this);
 
     root->setContentsMargins(20, 20, 20, 20);
     root->setSpacing(14);
 
     QLabel* title =
-        new QLabel("Private Chat with " + targetUser);
+        new QLabel("Private Chat with " + targetUser, this);
 
     title->setStyleSheet(
         "font-size:18px;"
@@ -202,11 +225,9 @@ void PrivateWindow::rebuildLayout()
         "}"
     );
 
-    QFrame* inputBar = new QFrame(this);
+    ui->inputBar->setMinimumHeight(66);
 
-    inputBar->setMinimumHeight(66);
-
-    inputBar->setStyleSheet(
+    ui->inputBar->setStyleSheet(
         "QFrame {"
         "background-color:#151525;"
         "border:2px solid #3a3b55;"
@@ -215,7 +236,7 @@ void PrivateWindow::rebuildLayout()
     );
 
     QHBoxLayout* inputLayout =
-        new QHBoxLayout(inputBar);
+        new QHBoxLayout(ui->inputBar);
 
     inputLayout->setContentsMargins(12, 8, 12, 8);
     inputLayout->setSpacing(10);
@@ -225,6 +246,7 @@ void PrivateWindow::rebuildLayout()
     ui->messageInput->setStyleSheet(
         "QLineEdit {"
         "background-color:#2a2b3d;"
+        "color:#e0e0f0;"
         "border:2px solid #4a4b6a;"
         "border-radius:22px;"
         "padding:0px 16px;"
@@ -257,6 +279,11 @@ void PrivateWindow::rebuildLayout()
     deleteVoiceButton = new QPushButton("🗑", this);
     attachmentButton = new QPushButton("📎", this);
     cameraButton = new QPushButton("📷", this);
+
+    voiceButton->setToolTip("Record voice message");
+    deleteVoiceButton->setToolTip("Delete recorded voice");
+    attachmentButton->setToolTip("Send image, video, or file");
+    cameraButton->setToolTip("Take photo or record video");
 
     QList<QPushButton*> buttons = {
         voiceButton,
@@ -295,9 +322,7 @@ void PrivateWindow::rebuildLayout()
 
     root->addWidget(title);
     root->addWidget(ui->privateDisplay, 1);
-    root->addWidget(inputBar);
-
-    setLayout(root);
+    root->addWidget(ui->inputBar);
 }
 
 void PrivateWindow::setupVoiceRecorder()
