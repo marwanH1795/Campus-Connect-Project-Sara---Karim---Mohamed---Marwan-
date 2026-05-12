@@ -1,0 +1,103 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [ 4 0 R 6 0 R ] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 4851 >>
+stream
+BT /F1 21 Tf 54 760 Td (Campus Connect - Project Summary) Tj ET
+BT /F1 12 Tf 54 732 Td (Real-Time Client-Server Text Chat Application) Tj ET
+BT /F1 10 Tf 54 714 Td (Team: Marwan, Karim, Mohamed, Sara) Tj ET
+BT /F1 10 Tf 54 700 Td () Tj ET
+BT /F1 13 Tf 54 693 Td (Overview) Tj ET
+BT /F1 10 Tf 54 676 Td (Campus Connect is a real-time client-server chat application built for the CSCE 1102) Tj ET
+BT /F1 10 Tf 54 663 Td (Fundamentals of Computing II Lab capstone project. The system allows multiple users to) Tj ET
+BT /F1 10 Tf 54 650 Td (connect to a central server, exchange public messages, start private chats, and communicate) Tj ET
+BT /F1 10 Tf 54 637 Td (inside chat groups. The project focuses on a working GUI client, asynchronous networking,) Tj ET
+BT /F1 10 Tf 54 624 Td (JSON-based communication, separated software layers, and automated unit testing.) Tj ET
+BT /F1 10 Tf 54 611 Td () Tj ET
+BT /F1 13 Tf 54 604 Td (Architecture and Technology) Tj ET
+BT /F1 10 Tf 54 587 Td (The client side is a Qt Widgets desktop application. The GUI layer handles screens, forms,) Tj ET
+BT /F1 10 Tf 54 574 Td (buttons, status labels, and user interaction. Business logic is handled separately through) Tj ET
+BT /F1 10 Tf 54 561 Td (controller/state classes, while networking is accessed through an INetworkClient interface.) Tj ET
+BT /F1 10 Tf 54 548 Td (The real network client uses Qt Network and TCP sockets.) Tj ET
+BT /F1 10 Tf 54 535 Td (The server side is a command-line application implemented with Boost.Asio. It accepts) Tj ET
+BT /F1 10 Tf 54 522 Td (multiple clients asynchronously, manages sessions, routes messages, handles disconnects, and) Tj ET
+BT /F1 10 Tf 54 509 Td (communicates with clients using structured JSON messages over TCP.) Tj ET
+BT /F1 10 Tf 54 496 Td () Tj ET
+BT /F1 13 Tf 54 489 Td (Main Features) Tj ET
+BT /F1 10 Tf 54 472 Td (- Login screen with username, server IP, and port fields.) Tj ET
+BT /F1 10 Tf 54 459 Td (- Public chat between connected users.) Tj ET
+BT /F1 10 Tf 54 446 Td (- Online user list and private chat windows.) Tj ET
+BT /F1 10 Tf 54 433 Td (- Group creation, joining, and group messaging.) Tj ET
+BT /F1 10 Tf 54 420 Td (- Typing status updates and visible user feedback.) Tj ET
+BT /F1 10 Tf 54 407 Td (- JSON serialization/deserialization for all main message types.) Tj ET
+BT /F1 10 Tf 54 394 Td (- File/media attachment support as an extended feature.) Tj ET
+BT /F1 10 Tf 54 381 Td () Tj ET
+BT /F1 13 Tf 54 374 Td (Requirement Coverage) Tj ET
+BT /F1 10 Tf 54 357 Td (The project satisfies the required GUI component by providing multiple Qt screens, user) Tj ET
+BT /F1 10 Tf 54 344 Td (input controls, dynamic updates, and feedback for user actions. It satisfies the networking) Tj ET
+BT /F1 10 Tf 54 331 Td (component by using TCP sockets, asynchronous I/O, structured JSON messages, and separated) Tj ET
+BT /F1 10 Tf 54 318 Td (networking code. It satisfies the testing component by using GoogleTest/GoogleMock with) Tj ET
+BT /F1 10 Tf 54 305 Td (mocked client networking and server-side logic tests.) Tj ET
+BT /F1 10 Tf 54 292 Td () Tj ET
+BT /F1 13 Tf 54 285 Td (Bonus Features) Tj ET
+BT /F1 10 Tf 54 268 Td (The implemented bonus-level features include multiple users with private chats, group chat) Tj ET
+BT /F1 10 Tf 54 255 Td (support, and attachment/media functionality. These features extend the application beyond a) Tj ET
+BT /F1 10 Tf 54 242 Td (basic text-only chat and make it closer to a complete communication product.) Tj ET
+BT /F1 10 Tf 54 229 Td () Tj ET
+BT /F1 13 Tf 54 222 Td (Team Contributions) Tj ET
+BT /F1 10 Tf 54 205 Td (Marwan worked on networking, server-side functionality, message routing/session handling,) Tj ET
+BT /F1 10 Tf 54 192 Td (and the bonus features. Karim worked on Qt Designer integration, interface polishing, and) Tj ET
+BT /F1 10 Tf 54 179 Td (communication validation. Mohamed worked on Qt Designer integration, integration testing,) Tj ET
+BT /F1 10 Tf 54 166 Td (final system testing, and debugging. Sara worked on Qt Designer integration, communication) Tj ET
+BT /F1 10 Tf 54 153 Td (validation, presentation slides, and final delivery material.) Tj ET
+BT /F1 10 Tf 54 140 Td () Tj ET
+BT /F1 13 Tf 54 133 Td (Demo Plan) Tj ET
+BT /F1 10 Tf 54 116 Td (For the live demo, one machine runs the server executable, and multiple client applications) Tj ET
+BT /F1 10 Tf 54 103 Td (connect using the server machine IP address and port 12345. The demo should show successful) Tj ET
+BT /F1 10 Tf 54 90 Td (connection, public chat, private chat, group chat, and basic error handling. If network) Tj ET
+BT /F1 10 Tf 54 77 Td (restrictions occur, the fallback is to run multiple clients locally or connect all laptops) Tj ET
+BT /F1 10 Tf 54 64 Td (through a phone hotspot.) Tj ET
+BT /F1 10 Tf 54 51 Td () Tj ET
+
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 452 >>
+stream
+BT /F1 13 Tf 54 760 Td (Conclusion) Tj ET
+BT /F1 10 Tf 54 743 Td (Campus Connect is a complete client-server chat system that demonstrates GUI design,) Tj ET
+BT /F1 10 Tf 54 730 Td (networking, JSON communication, state management, testing, and integration. The project) Tj ET
+BT /F1 10 Tf 54 717 Td (meets the core capstone requirements and includes additional bonus features that improve the) Tj ET
+BT /F1 10 Tf 54 704 Td (final product.) Tj ET
+
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000010 00000 n 
+0000000062 00000 n 
+0000000130 00000 n 
+0000000203 00000 n 
+0000000332 00000 n 
+0000005238 00000 n 
+0000005367 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+5873
+%%EOF

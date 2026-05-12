@@ -34,18 +34,30 @@ void TcpNetworkClient::setBinaryHandler(std::function<void(const QByteArray&)> h
     binaryHandler = handler;
 }
 
-void TcpNetworkClient::connectToServer(const std::string& username,
+bool TcpNetworkClient::connectToServer(const std::string& username,
                                        const std::string& host,
                                        unsigned short port) {
-    QObject::connect(socket, &QTcpSocket::connected, [this, username]() {
-        QString connectMessage =
-            QString("{\"type\":\"connect\",\"sender\":\"%1\",\"target\":\"\",\"groupId\":\"\",\"content\":\"\",\"timestamp\":\"\"}")
-                .arg(QString::fromStdString(username));
+    if (socket->state() != QAbstractSocket::UnconnectedState) {
+        socket->abort();
+    }
 
-        sendMessage(connectMessage.toStdString());
-    });
-
+    buffer.clear();
     socket->connectToHost(QString::fromStdString(host), port);
+
+    if (!socket->waitForConnected(3000)) {
+        qDebug() << "Failed to connect to server:"
+                 << QString::fromStdString(host)
+                 << port
+                 << socket->errorString();
+        return false;
+    }
+
+    QString connectMessage =
+        QString("{\"type\":\"connect\",\"sender\":\"%1\",\"target\":\"\",\"groupId\":\"\",\"content\":\"\",\"timestamp\":\"\"}")
+            .arg(QString::fromStdString(username));
+
+    sendMessage(connectMessage.toStdString());
+    return true;
 }
 
 void TcpNetworkClient::sendMessage(const std::string& message) {

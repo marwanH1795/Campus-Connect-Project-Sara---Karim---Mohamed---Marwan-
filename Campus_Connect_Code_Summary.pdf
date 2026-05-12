@@ -1,0 +1,122 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [ 4 0 R 6 0 R ] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 3444 >>
+stream
+BT /F1 23 Tf 44 755 Td (Campus Connect - Code Summary) Tj ET
+BT /F1 12.5 Tf 44 727 Td (Qt client + Boost.Asio server + JSON over TCP) Tj ET
+BT /F1 10.5 Tf 44 710 Td () Tj ET
+BT /F1 14 Tf 44 705 Td (Build and Entry Points) Tj ET
+BT /F1 10.5 Tf 44 688 Td (CMakeLists.txt: builds app.exe, server.exe, final_tests_client, and final_tests_server. It) Tj ET
+BT /F1 10.5 Tf 44 675 Td (links Qt for the GUI/client networking, Boost.Asio/Windows socket libraries for the server,) Tj ET
+BT /F1 10.5 Tf 44 662 Td (and GoogleTest/GoogleMock for tests.) Tj ET
+BT /F1 10.5 Tf 44 649 Td (src/main.cpp: starts QApplication, creates TcpNetworkClient, injects it into ChatController) Tj ET
+BT /F1 10.5 Tf 44 636 Td (through INetworkClient, opens LoginWindow, and runs the Qt event loop.) Tj ET
+BT /F1 10.5 Tf 44 623 Td (server.cpp: starts the CLI server by creating boost::asio::io_context, constructing) Tj ET
+BT /F1 10.5 Tf 44 610 Td (TcpServer on port 12345, and running the asynchronous event loop.) Tj ET
+BT /F1 10.5 Tf 44 597 Td () Tj ET
+BT /F1 14 Tf 44 592 Td (Client GUI Layer - src/gui) Tj ET
+BT /F1 10.5 Tf 44 575 Td (LoginWindow: collects username, server IP, and port, then calls ChatController::connectUser.) Tj ET
+BT /F1 10.5 Tf 44 562 Td (On success it opens ChatWindow. LoginWindow.ui stores the Qt Designer layout.) Tj ET
+BT /F1 10.5 Tf 44 549 Td (ChatWindow: main public chat screen. It displays public messages, online users, typing) Tj ET
+BT /F1 10.5 Tf 44 536 Td (status, and controls for text, voice, attachments, camera media, groups, and private chats.) Tj ET
+BT /F1 10.5 Tf 44 523 Td (PrivateWindow: private chat dialog for one user. It sends private messages and attachments) Tj ET
+BT /F1 10.5 Tf 44 510 Td (through ChatController and renders private conversation history.) Tj ET
+BT /F1 10.5 Tf 44 497 Td (GroupWindow: group chat screen. It creates/joins groups, sends group messages, and displays) Tj ET
+BT /F1 10.5 Tf 44 484 Td (group-specific messages and typing status.) Tj ET
+BT /F1 10.5 Tf 44 471 Td (MessageRenderer: converts Message objects and attachment markers into HTML for the chat) Tj ET
+BT /F1 10.5 Tf 44 458 Td (displays, including text, voice, image, video, file links, group messages, and typing) Tj ET
+BT /F1 10.5 Tf 44 445 Td (indicators.) Tj ET
+BT /F1 10.5 Tf 44 432 Td () Tj ET
+BT /F1 14 Tf 44 427 Td (Client Business Logic - src/logic) Tj ET
+BT /F1 10.5 Tf 44 410 Td (ChatController: central client controller. It validates actions, builds Message objects,) Tj ET
+BT /F1 10.5 Tf 44 397 Td (serializes JSON, sends through INetworkClient, receives incoming callbacks, updates) Tj ET
+BT /F1 10.5 Tf 44 384 Td (ChatState, and manages attachment metadata/chunks.) Tj ET
+BT /F1 10.5 Tf 44 371 Td (ChatState: stores current user, online users, public/private/group messages, joined groups,) Tj ET
+BT /F1 10.5 Tf 44 358 Td (and typing-state data. GUI reads state instead of owning chat logic.) Tj ET
+BT /F1 10.5 Tf 44 345 Td (Message: shared protocol model. It defines message types such as connect, public_message,) Tj ET
+BT /F1 10.5 Tf 44 332 Td (private_message, group_message, typing, attachment_start, and attachment_end. It converts) Tj ET
+BT /F1 10.5 Tf 44 319 Td (between C++ objects and Qt JSON.) Tj ET
+BT /F1 10.5 Tf 44 306 Td (InputValidator: checks username and message validity before ChatController allows) Tj ET
+BT /F1 10.5 Tf 44 293 Td (connect/send operations.) Tj ET
+
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 4006 >>
+stream
+BT /F1 21 Tf 44 755 Td (Campus Connect - Code Summary \(continued\)) Tj ET
+BT /F1 10.5 Tf 44 730 Td () Tj ET
+BT /F1 14 Tf 44 725 Td (Client Networking - src/network) Tj ET
+BT /F1 10.5 Tf 44 708 Td (INetworkClient: abstract interface used by ChatController. This keeps networking separate) Tj ET
+BT /F1 10.5 Tf 44 695 Td (from business logic and lets tests inject a mock client.) Tj ET
+BT /F1 10.5 Tf 44 682 Td (TcpNetworkClient: real Qt TCP client. It connects to the selected host/port, sends framed) Tj ET
+BT /F1 10.5 Tf 44 669 Td (JSON text and binary attachment chunks, reads frames asynchronously using) Tj ET
+BT /F1 10.5 Tf 44 656 Td (QTcpSocket::readyRead, and dispatches payloads to callbacks.) Tj ET
+BT /F1 10.5 Tf 44 643 Td (MockNetworkClient: fake/mock network implementation used for isolated controller tests or) Tj ET
+BT /F1 10.5 Tf 44 630 Td (local non-socket scenarios.) Tj ET
+BT /F1 10.5 Tf 44 617 Td () Tj ET
+BT /F1 14 Tf 44 612 Td (Server Layer - src/server) Tj ET
+BT /F1 10.5 Tf 44 595 Td (TcpServer: Boost.Asio acceptor. It asynchronously accepts incoming sockets and creates one) Tj ET
+BT /F1 10.5 Tf 44 582 Td (ClientSession per connected client while sharing one ServerController.) Tj ET
+BT /F1 10.5 Tf 44 569 Td (ClientSession: handles one client connection. It reads a 4-byte big-endian frame length,) Tj ET
+BT /F1 10.5 Tf 44 556 Td (then a payload. Frame type 0 is JSON text; frame type 1 is binary data. It forwards data to) Tj ET
+BT /F1 10.5 Tf 44 543 Td (ServerController and can send text/binary frames back.) Tj ET
+BT /F1 10.5 Tf 44 530 Td (ServerController: server routing/business logic. It registers/removes clients, handles) Tj ET
+BT /F1 10.5 Tf 44 517 Td (connect/public/private/group/typing/attachment messages, broadcasts public messages, routes) Tj ET
+BT /F1 10.5 Tf 44 504 Td (private messages, routes group messages, and updates user lists.) Tj ET
+BT /F1 10.5 Tf 44 491 Td (ServerState: server-side storage for users, sessions, groups, and membership data. It keeps) Tj ET
+BT /F1 10.5 Tf 44 478 Td (routing state separate from Boost.Asio socket code.) Tj ET
+BT /F1 10.5 Tf 44 465 Td () Tj ET
+BT /F1 14 Tf 44 460 Td (Message Flow and Attachments) Tj ET
+BT /F1 10.5 Tf 44 443 Td (Flow: GUI input -> ChatController validation -> Message object -> Message::toJson ->) Tj ET
+BT /F1 10.5 Tf 44 430 Td (TcpNetworkClient frame -> TCP -> ClientSession -> ServerController routing -> receiving) Tj ET
+BT /F1 10.5 Tf 44 417 Td (clients -> Message::fromJson -> ChatState update -> GUI refresh.) Tj ET
+BT /F1 10.5 Tf 44 404 Td (Attachments use attachment_start metadata, binary chunk frames identified by fileId, and) Tj ET
+BT /F1 10.5 Tf 44 391 Td (attachment_end. The receiver saves chunks and renders the completed file as a) Tj ET
+BT /F1 10.5 Tf 44 378 Td (voice/image/video/file link.) Tj ET
+BT /F1 10.5 Tf 44 365 Td () Tj ET
+BT /F1 14 Tf 44 360 Td (Tests - final_tests) Tj ET
+BT /F1 10.5 Tf 44 343 Td (Client tests: test_ChatController.cpp uses GoogleMock MockNetworkClient to verify validation) Tj ET
+BT /F1 10.5 Tf 44 330 Td (and sending behavior without real sockets.) Tj ET
+BT /F1 10.5 Tf 44 317 Td (Server tests: test_ChatState.cpp checks joining groups, avoiding duplicate groups, storing) Tj ET
+BT /F1 10.5 Tf 44 304 Td (group messages correctly, accumulating public messages, and default group membership.) Tj ET
+BT /F1 10.5 Tf 44 291 Td (Forwarding headers in final_tests/SERVER ensure tests use the real ChatState and Message) Tj ET
+BT /F1 10.5 Tf 44 278 Td (classes instead of stale duplicate definitions.) Tj ET
+BT /F1 10.5 Tf 44 265 Td () Tj ET
+BT /F1 14 Tf 44 260 Td (Design Point) Tj ET
+BT /F1 10.5 Tf 44 243 Td (The code follows the required separation: GUI displays/collects input, logic classes enforce) Tj ET
+BT /F1 10.5 Tf 44 230 Td (rules/state, networking classes handle sockets, server classes separate sessions from) Tj ET
+BT /F1 10.5 Tf 44 217 Td (routing/state, and JSON is the shared protocol.) Tj ET
+
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000010 00000 n 
+0000000062 00000 n 
+0000000130 00000 n 
+0000000203 00000 n 
+0000000332 00000 n 
+0000003831 00000 n 
+0000003960 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+8021
+%%EOF
